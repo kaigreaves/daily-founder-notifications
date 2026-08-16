@@ -61,7 +61,11 @@ ACCEPTED_CONFIDENCE = {"high", "medium"}
 
 
 class Rejected(Exception):
-    """The deal is not fit to send."""
+    """Malformed output. Something is broken - fail loudly."""
+
+
+class Skipped(Exception):
+    """A legitimate reason not to send. Not an error; exit cleanly."""
 
 
 def clean_industry(value, field):
@@ -94,7 +98,10 @@ def validate(deal):
 
     confidence = str(deal.get("confidence", "high")).lower()
     if confidence not in ACCEPTED_CONFIDENCE:
-        raise Rejected("confidence is {!r}; refusing to send".format(confidence))
+        raise Skipped(
+            "the model rated this deal {!r} confidence, so it is probably not a "
+            "real purchase price. Nothing sent.".format(confidence)
+        )
 
     try:
         amount = float(deal["amount_usd_millions"])
@@ -216,6 +223,9 @@ def main():
 
     try:
         deal = validate(raw)
+    except Skipped as exc:
+        print("Not sending: {}".format(exc))
+        return 0
     except Rejected as exc:
         print("ERROR: refusing to send - {}".format(exc), file=sys.stderr)
         print("Deal payload was: {}".format(raw), file=sys.stderr)

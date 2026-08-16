@@ -17,6 +17,7 @@ Usage:
 import argparse
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -88,20 +89,57 @@ def post_json(url, payload, key, timeout=120):
         return json.loads(resp.read().decode("utf-8"))
 
 
-def list_models(key):
+def available_models(key):
+    """Model IDs this key can actually call generateContent on."""
     req = urllib.request.Request(
         "{}/models".format(API_ROOT), headers={"x-goog-api-key": key}
     )
     with urllib.request.urlopen(req, timeout=30) as resp:
         data = json.loads(resp.read().decode("utf-8"))
 
+    return [
+        m.get("name", "").replace("models/", "")
+        for m in data.get("models", [])
+        if "generateContent" in m.get("supportedGenerationMethods", [])
+    ]
+
+
+# Anything matching these is unsuitable for an unattended daily job: previews
+# get retired without notice, and the non-text models cannot do this task.
+_MODEL_EXCLUDE = ("preview", "exp", "image", "tts", "audio", "vision", "embedding")
+
+
+def pick_model(models):
+    """Best general-purpose flash model available, newest version first.
+
+    Flash rather than pro because this is a cheap classification task and the
+    flash tier is what stays inside the free quota.
+    """
+    def version(name):
+        m = re.search(r"gemini-(\d+)\.(\d+)", name)
+        return (int(m.group(1)), int(m.group(2))) if m else (0, 0)
+
+    usable = [
+        n for n in models
+        if "flash" in n and not any(bad in n for bad in _MODEL_EXCLUDE)
+    ]
+    if not usable:
+        usable = [n for n in models if not any(bad in n for bad in _MODEL_EXCLUDE)]
+    if not usable:
+        return None
+
+    # Prefer full flash over -lite, then the highest version number.
+    usable.sort(key=lambda n: (version(n), "lite" not in n), reverse=True)
+    return usable[0]
+
+
+def list_models(key):
     print("Models your key can reach (generateContent only):\n")
-    for m in data.get("models", []):
-        if "generateContent" in m.get("supportedGenerationMethods", []):
-            print("  {:<45} {}".format(
-                m.get("name", "").replace("models/", ""),
-                m.get("displayName", ""),
-            ))
+    models = available_models(key)
+    for name in models:
+        print("  {}".format(name))
+    best = pick_model(models)
+    print("\nAuto-selection would choose: {}".format(best or "(nothing suitable)"))
     return 0
 
 
@@ -213,17 +251,39 @@ def main():
         },
     }
 
-    url = "{}/models/{}:generateContent".format(API_ROOT, args.model)
+    def call(model):
+        return post_json(
+            "{}/models/{}:generateContent".format(API_ROOT, model), payload, key
+        )
 
     try:
-        response = post_json(url, payload, key)
+        try:
+            response = call(args.model)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 404:
+                raise
+            # Google retires and renames models regularly. Rather than fail on a
+            # stale hardcoded name, ask the key what it can actually reach.
+            print("\n{} returned 404. Discovering an available model..."
+                  .format(args.model))
+            models = available_models(key)
+            fallback = pick_model(models)
+            if not fallback:
+                print("ERROR: no usable model found. Your key can reach: {}"
+                      .format(", ".join(models) or "(nothing)"), file=sys.stderr)
+                return 1
+            print("Retrying with {}".format(fallback))
+            response = call(fallback)
+            print("\nNOTE: {} worked but {} did not. To skip this lookup in "
+                  "future, set a repo variable GEMINI_MODEL to {}."
+                  .format(fallback, args.model, fallback))
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", "replace")
         print("ERROR: Gemini returned HTTP {}\n{}".format(exc.code, body),
               file=sys.stderr)
-        if exc.code == 404:
-            print("\nThat model name may not be available to your key. Run:\n"
-                  "  python3 scripts/select_deal.py --list-models",
+        if exc.code in (401, 403):
+            print("\nThat usually means GEMINI_API_KEY is missing, mistyped, or "
+                  "restricted. Recreate it at https://aistudio.google.com/apikey",
                   file=sys.stderr)
         elif exc.code == 429:
             print("\nFree-tier rate limit hit. Check quota at "

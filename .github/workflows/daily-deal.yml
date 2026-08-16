@@ -50,6 +50,44 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Check configuration
+        if: steps.gate.outputs.should_run == 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          # Only ever reports presence and length - never a value.
+          ok=1
+          report () {
+            if [ -z "$2" ]; then
+              echo "  MISSING   $1   <- add this secret in Settings > Secrets and variables > Actions"
+              ok=0
+            else
+              echo "  ok        $1   (${#2} characters)"
+            fi
+          }
+          echo "Secrets:"
+          report GEMINI_API_KEY      "$GEMINI_API_KEY"
+          report GMAIL_ADDRESS       "$GMAIL_ADDRESS"
+          report GMAIL_APP_PASSWORD  "$GMAIL_APP_PASSWORD"
+
+          stripped="${GMAIL_APP_PASSWORD// /}"
+          if [ -n "$GMAIL_APP_PASSWORD" ] && [ ${#stripped} -ne 16 ]; then
+            echo "  WARNING   GMAIL_APP_PASSWORD is ${#stripped} characters, expected 16."
+            echo "            Looks like a partial paste. Recreate it at"
+            echo "            https://myaccount.google.com/apppasswords"
+            ok=0
+          fi
+
+          if [ "$ok" -ne 1 ]; then
+            echo ""
+            echo "Configuration is incomplete - stopping before we waste an API call."
+            exit 1
+          fi
+          echo ""
+          echo "Configuration looks good."
+
       - name: Fetch and shortlist candidates
         if: steps.gate.outputs.should_run == 'true'
         run: python3 scripts/fetch_candidates.py
