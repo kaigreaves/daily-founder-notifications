@@ -36,12 +36,30 @@ jobs:
             echo "should_run=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          HOUR=$(TZ=America/New_York date +%H)
-          if [ "$HOUR" = "18" ]; then
-            echo "It is ${HOUR}:00 in New York - proceeding."
+
+          # Two crons are registered because GitHub only speaks UTC and New
+          # York moves twice a year. Exactly one is correct on any given day.
+          #
+          # This deliberately does NOT check the current clock time. GitHub
+          # routinely runs scheduled jobs late, and a delay past the hour would
+          # make an hour-equals-18 test skip the day entirely. Which cron fired
+          # is a fact that a delay cannot change.
+          OFFSET=$(TZ=America/New_York date +%z)
+          SCHEDULE="${{ github.event.schedule }}"
+
+          case "$OFFSET" in
+            -0400) WANTED="0 22 * * *" ;;   # EDT: 22:00 UTC is 18:00 ET
+            -0500) WANTED="0 23 * * *" ;;   # EST: 23:00 UTC is 18:00 ET
+            *)     echo "Unexpected New York offset $OFFSET - proceeding anyway."
+                   echo "should_run=true" >> "$GITHUB_OUTPUT"; exit 0 ;;
+          esac
+
+          if [ "$SCHEDULE" = "$WANTED" ]; then
+            echo "New York is at UTC$OFFSET, so '$SCHEDULE' is today's 18:00 ET run."
+            echo "Actual start: $(TZ=America/New_York date '+%H:%M %Z') (delay is fine)."
             echo "should_run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "It is ${HOUR}:00 in New York, not 18:00 - skipping this trigger."
+            echo "New York is at UTC$OFFSET, so '$WANTED' is today's run, not '$SCHEDULE'."
             echo "should_run=false" >> "$GITHUB_OUTPUT"
           fi
 
