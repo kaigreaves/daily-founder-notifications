@@ -10,6 +10,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOV3NyUGdVQzdaclJuV1locDRId2R4LW9BQWd1VWs3bmtHSmo1XzRHamdnd1lJV2ZlOFpEVFBjeTVPSVNTZ3lLelhpZ1VHdmI0SHR3YWdBeVlkdlc4ZkhFNnY3VGk2U0t3aGN4RllYS0QtOHRUa2dESU5rbFZuQXdib28xQWlHVDhrMERpRzZRa29RZzZCWDlybG95eEJPUk5WN1JV?oc=5",
       "used_fallback": false,
       "message": "Software company, Cursor, was acquired by Aerospace company, SpaceX, for $60,000 million. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-08-16T18:49:29-04:00",
+      "deal_key": "misr hytech seed|advanta",
+      "target_name": "Misr Hytech Seed",
+      "acquirer_name": "Advanta",
+      "amount_usd_millions": 110.0,
+      "announced_date": "2026-08-15",
+      "article_url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxPcXk2ZjczaGZYdE1aZDUzS1M4UXFDR3dQcEtVcVgxdDdhdk1FM3JTeFZsU0hKY3NJeXhFQm5CVl9ENVdoN2w4VXkyTDJfZXRQM293Unl3Nk4ta3dfellVTGNDbkV0MGhqU21YLWFfVG1wUVFKVmNvT2kweUI5QzI3V0l1M0FTY1VKMVRKLUFtQnVHcVY1WThhN2hBaw?oc=5",
+      "used_fallback": false,
+      "message": "Agriculture company, Misr Hytech Seed, was acquired by Agriculture company, Advanta, for $110 million. Tap to read more."
     }
   ]
 }
