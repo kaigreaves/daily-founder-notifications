@@ -56,17 +56,10 @@ jobs:
 
       - name: Select the winning deal
         if: steps.gate.outputs.should_run == 'true'
-        uses: anthropics/claude-code-action@v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt: |
-            Read the file prompts/select_deal.md in this repository and follow
-            it exactly. It is your complete task specification. Your only
-            deliverable is the file work/deal.json.
-          claude_args: |
-            --allowedTools "Read,Write,Glob,Grep,WebSearch,WebFetch"
-            --max-turns 40
-            --model claude-sonnet-5
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        run: python3 scripts/select_deal.py
 
       - name: Send the notification
         if: steps.gate.outputs.should_run == 'true'

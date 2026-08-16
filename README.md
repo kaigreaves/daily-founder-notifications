@@ -24,7 +24,7 @@ GitHub Actions cron (22:00 + 23:00 UTC, gated to 18:00 ET)
   │       → filter to acquisitions with a parsed USD price ≥ $50M
   │       → work/candidates.json  (~120 candidates)
   │
-  ├─ 2. anthropics/claude-code-action    reads prompts/select_deal.md
+  ├─ 2. scripts/select_deal.py           Gemini API, free tier, JSON schema
   │       → throws out bad price parses (AUM, pay packages, funding rounds)
   │       → picks the largest valid deal, labels industries, picks the article
   │       → work/deal.json
@@ -39,6 +39,10 @@ GitHub Actions cron (22:00 + 23:00 UTC, gated to 18:00 ET)
 the judgment work, because only judgment catches that "expands its $164 billion
 platform by acquiring X" is not a $164 billion purchase price. Each step does
 what it is actually good at.
+
+Step 2 is a single API call with a response schema attached, not an agent — the
+job is one structured extraction, so the model cannot return a shape the sender
+does not expect. About 17k tokens a run, which sits inside Gemini's free tier.
 
 ## One-time setup
 
@@ -58,22 +62,23 @@ a 16-character key that only works for mail and can be revoked on its own.
 3. Copy the 16-character password. Google shows it with spaces
    (`abcd efgh ijkl mnop`) — **strip the spaces**. Shown once only.
 
-### 2. Claude OAuth token
+### 2. Gemini API key (~1 minute, free)
 
-The `claude` CLI is not installed on this machine (this repo was built from the
-Claude desktop app). Install it, then generate the token:
+1. Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey) and
+   sign in with the same Google account.
+2. **Create API key** → pick or create a project → copy the key.
+
+No OAuth, no CLI, no browser callback. At one run a day this stays inside the
+free tier permanently.
+
+If the default model is ever retired, check what your key can reach:
 
 ```bash
-npm install -g @anthropic-ai/claude-code
+GEMINI_API_KEY=your-key python3 scripts/select_deal.py --list-models
 ```
 
-```bash
-claude setup-token
-```
-
-This authorizes GitHub Actions against your existing Claude subscription, so
-there is no separate API bill. The token is long-lived but not permanent — if
-the workflow starts failing on auth in a year, regenerate it here.
+Then set a repo variable named `GEMINI_MODEL` (Settings → Secrets and variables
+→ Actions → **Variables**) to override it. The default is `gemini-2.5-flash`.
 
 ### 3. Push to GitHub
 
@@ -108,7 +113,7 @@ In the repo: **Settings → Secrets and variables → Actions → New repository
 |---|---|
 | `GMAIL_ADDRESS` | `kaigreaves18@gmail.com` |
 | `GMAIL_APP_PASSWORD` | the 16 characters from step 1.3, no spaces |
-| `CLAUDE_CODE_OAUTH_TOKEN` | token from step 2 |
+| `GEMINI_API_KEY` | key from step 2 |
 
 `NOTIFY_TO` is optional — add it only to deliver somewhere other than the
 sending address.
@@ -156,12 +161,15 @@ property sales, funding rounds, rumors, and unconfirmed bids are excluded.
 ## Running it locally
 
 ```bash
-python3 scripts/fetch_candidates.py && python3 scripts/send_notification.py --dry-run
+python3 scripts/fetch_candidates.py
 ```
 
-`fetch_candidates.py` needs no keys and no dependencies. The dry run needs a
-`work/deal.json`, which normally comes from the LLM step — write one by hand to
-test the sender in isolation.
+```bash
+GEMINI_API_KEY=your-key python3 scripts/select_deal.py && python3 scripts/send_notification.py --dry-run
+```
+
+`fetch_candidates.py` needs no keys and no dependencies. `--dry-run` validates
+and prints the notification without sending it or recording anything.
 
 ## Files
 
@@ -169,6 +177,7 @@ test the sender in isolation.
 |---|---|
 | `.github/workflows/daily-deal.yml` | Schedule, gating, and the four steps |
 | `scripts/fetch_candidates.py` | RSS → filtered, priced candidate list |
+| `scripts/select_deal.py` | Gemini call that picks and labels the winner |
 | `scripts/send_notification.py` | Validation gate, template, Gmail SMTP, state |
 | `scripts/common.py` | Time windows, money parsing, dedup keys |
 | `prompts/select_deal.md` | The selection spec the LLM step follows |
