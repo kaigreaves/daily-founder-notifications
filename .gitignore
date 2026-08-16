@@ -1,0 +1,7 @@
+# Per-run scratch: candidates.json and deal.json are regenerated every run.
+work/
+
+.DS_Store
+__pycache__/
+*.pyc
+.env

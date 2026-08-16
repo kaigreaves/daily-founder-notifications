@@ -1,0 +1,104 @@
+name: Daily deal notification
+
+on:
+  schedule:
+    # GitHub cron is UTC only, so both are registered and a gate step below
+    # keeps whichever one is 18:00 in New York today.
+    - cron: "0 22 * * *"   # 18:00 ET while EDT is in effect
+    - cron: "0 23 * * *"   # 18:00 ET while EST is in effect
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Validate and print, but do not send a notification"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-deal
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Decide whether this is the 18:00 ET run
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "Manual run - proceeding."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          HOUR=$(TZ=America/New_York date +%H)
+          if [ "$HOUR" = "18" ]; then
+            echo "It is ${HOUR}:00 in New York - proceeding."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "It is ${HOUR}:00 in New York, not 18:00 - skipping this trigger."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.gate.outputs.should_run == 'true'
+        with:
+          python-version: "3.11"
+
+      - name: Fetch and shortlist candidates
+        if: steps.gate.outputs.should_run == 'true'
+        run: python3 scripts/fetch_candidates.py
+
+      - name: Select the winning deal
+        if: steps.gate.outputs.should_run == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Read the file prompts/select_deal.md in this repository and follow
+            it exactly. It is your complete task specification. Your only
+            deliverable is the file work/deal.json.
+          claude_args: |
+            --allowedTools "Read,Write,Glob,Grep,WebSearch,WebFetch"
+            --max-turns 40
+            --model claude-sonnet-5
+
+      - name: Send the notification
+        if: steps.gate.outputs.should_run == 'true'
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          NOTIFY_TO: ${{ secrets.NOTIFY_TO }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            python3 scripts/send_notification.py --dry-run
+          else
+            python3 scripts/send_notification.py
+          fi
+
+      - name: Record what was sent
+        if: steps.gate.outputs.should_run == 'true' && inputs.dry_run != true
+        run: |
+          git config user.name "deal-bot"
+          git config user.email "deal-bot@users.noreply.github.com"
+          git add state/sent.json
+          if git diff --staged --quiet; then
+            echo "No state change to commit."
+          else
+            git commit -m "Sent daily deal notification [skip ci]"
+            git push
+          fi
+
+      - name: Upload run details for debugging
+        if: always() && steps.gate.outputs.should_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-${{ github.run_id }}
+          path: work/
+          retention-days: 14
+          if-no-files-found: ignore

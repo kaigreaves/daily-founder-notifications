@@ -1,0 +1,195 @@
+# Daily Founder Notifications
+
+One notification a day, at **6:00 PM ET**, naming the most expensive company
+acquisition announced the day before. Tapping through opens the most widely
+read article about the deal.
+
+```
+AI company, Cursor, was acquired by Aerospace company, SpaceX, for $60,000 million. Tap to read more.
+```
+
+Delivery is a plain email to your own Gmail, sent over SMTP with an App
+Password — no third-party service, nothing to install, no monthly cost. **The
+notification text is the email's subject line**, because the subject is what
+iOS renders on the lock screen. The body is just a large tappable button to the
+article.
+
+## How it works
+
+```
+GitHub Actions cron (22:00 + 23:00 UTC, gated to 18:00 ET)
+  │
+  ├─ 1. scripts/fetch_candidates.py     stdlib only, no API keys
+  │       7 Google News RSS queries + PR Newswire + GlobeNewswire
+  │       → filter to acquisitions with a parsed USD price ≥ $50M
+  │       → work/candidates.json  (~120 candidates)
+  │
+  ├─ 2. anthropics/claude-code-action    reads prompts/select_deal.md
+  │       → throws out bad price parses (AUM, pay packages, funding rounds)
+  │       → picks the largest valid deal, labels industries, picks the article
+  │       → work/deal.json
+  │
+  ├─ 3. scripts/send_notification.py     validates, dedupes, emails via Gmail SMTP
+  │
+  └─ 4. commits state/sent.json back to the repo
+```
+
+**Why the split.** Python does the numeric work, because regex parses
+"$4.1 billion" into `4100` perfectly and an LLM sometimes doesn't. The LLM does
+the judgment work, because only judgment catches that "expands its $164 billion
+platform by acquiring X" is not a $164 billion purchase price. Each step does
+what it is actually good at.
+
+## One-time setup
+
+I can't create accounts or handle your credentials, so these four are yours.
+Everything else is already built.
+
+### 1. Gmail App Password (~3 minutes, free)
+
+Google blocks plain password logins from scripts, so you need an App Password —
+a 16-character key that only works for mail and can be revoked on its own.
+
+1. Turn on 2-Step Verification if it is not already on:
+   [myaccount.google.com/signinoptions/twosv](https://myaccount.google.com/signinoptions/twosv).
+   App Passwords do not exist without it.
+2. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords),
+   name it `Daily Deals`, and create it.
+3. Copy the 16-character password. Google shows it with spaces
+   (`abcd efgh ijkl mnop`) — **strip the spaces**. Shown once only.
+
+### 2. Claude OAuth token
+
+The `claude` CLI is not installed on this machine (this repo was built from the
+Claude desktop app). Install it, then generate the token:
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+```bash
+claude setup-token
+```
+
+This authorizes GitHub Actions against your existing Claude subscription, so
+there is no separate API bill. The token is long-lived but not permanent — if
+the workflow starts failing on auth in a year, regenerate it here.
+
+### 3. Push to GitHub
+
+There is no SSH key on this machine, so these use HTTPS. Git is already set to
+save credentials to the macOS keychain, so you authenticate once.
+
+```bash
+git config --global user.name "Kai Greaves" && git config --global user.email "kaigreaves18@gmail.com"
+```
+
+```bash
+cd "/Users/kaigreaves/Daily Founder Notifications" && git init -b main && git add -A && git commit -m "Daily deal notifications"
+```
+
+Create an empty repo at [github.com/new](https://github.com/new) named
+`daily-founder-notifications` — no README, no .gitignore, no license. Then:
+
+```bash
+cd "/Users/kaigreaves/Daily Founder Notifications" && git remote add origin https://github.com/<your-username>/daily-founder-notifications.git && git push -u origin main
+```
+
+When prompted, the username is your GitHub username and the **password is a
+Personal Access Token**, not your account password. Create one at
+[github.com/settings/tokens](https://github.com/settings/tokens) →
+*Generate new token (classic)* → scope `repo`.
+
+### 4. Add three secrets
+
+In the repo: **Settings → Secrets and variables → Actions → New repository secret**.
+
+| Secret | Value |
+|---|---|
+| `GMAIL_ADDRESS` | `kaigreaves18@gmail.com` |
+| `GMAIL_APP_PASSWORD` | the 16 characters from step 1.3, no spaces |
+| `CLAUDE_CODE_OAUTH_TOKEN` | token from step 2 |
+
+`NOTIFY_TO` is optional — add it only to deliver somewhere other than the
+sending address.
+
+### 5. Let Mail actually notify you
+
+An email only becomes a lock-screen notification if Mail is allowed to make
+one. On the iPhone: **Settings → Notifications → Mail →** your Gmail account →
+Allow Notifications on, Alerts set to **Lock Screen + Banners**. If you read
+Gmail in the Gmail app instead of Apple Mail, do the same under **Settings →
+Notifications → Gmail**. Skip this and the mail lands silently, which looks
+exactly like the system being broken.
+
+Worth doing too: a Mail VIP or a filter that never sends `Daily Deals` to spam.
+
+### 6. Test it
+
+**Actions → Daily deal notification → Run workflow**, with `dry_run` checked.
+That runs the entire pipeline and prints the notification without sending. Run
+it again unchecked to get real mail on your phone.
+
+Scheduled runs start automatically. GitHub disables cron on repos with no
+activity for 60 days, but this one commits `state/sent.json` on every send, so
+it keeps itself alive.
+
+## Behavior
+
+**Empty days.** Most days with no deal are weekends, and roughly two-thirds of
+acquisitions never disclose a price. When yesterday has nothing usable, the
+system widens to the previous 7 days and sends the biggest deal you have not
+already been sent — so you get a notification nearly every day, never a
+repeat. `state/sent.json` is the memory that makes that work.
+
+**Nothing at all.** If 7 days produce nothing valid, no notification is sent and
+the run succeeds quietly. That is rare.
+
+**Bad data.** The sender refuses to send if a field is missing, the amount is
+not a positive number, the URL is malformed, or the LLM marked the deal
+`confidence: low`. The run fails and GitHub emails you. **A failed run is
+always silence, never a wrong notification.**
+
+**Scope.** All industries, worldwide, USD only. Minority stakes, asset and
+property sales, funding rounds, rumors, and unconfirmed bids are excluded.
+
+## Running it locally
+
+```bash
+python3 scripts/fetch_candidates.py && python3 scripts/send_notification.py --dry-run
+```
+
+`fetch_candidates.py` needs no keys and no dependencies. The dry run needs a
+`work/deal.json`, which normally comes from the LLM step — write one by hand to
+test the sender in isolation.
+
+## Files
+
+| Path | What it does |
+|---|---|
+| `.github/workflows/daily-deal.yml` | Schedule, gating, and the four steps |
+| `scripts/fetch_candidates.py` | RSS → filtered, priced candidate list |
+| `scripts/send_notification.py` | Validation gate, template, Gmail SMTP, state |
+| `scripts/common.py` | Time windows, money parsing, dedup keys |
+| `prompts/select_deal.md` | The selection spec the LLM step follows |
+| `state/sent.json` | Every deal already sent — the dedup memory |
+| `work/` | Per-run scratch, gitignored, uploaded as a run artifact |
+
+## Known rough edges
+
+- **"$60,000 million"** is what the fixed template produces for a $60B deal.
+  Correct per spec, reads oddly. One-line change in `TEMPLATE` /
+  `format_millions` if you want billions above some threshold.
+- **Tap-through links are often `news.google.com`** URLs. They open the article
+  fine on a phone, just with a redirect. The LLM step uses `WebSearch` to find
+  a direct publisher link when it can.
+- **Coverage depends on English-language reporting.** A large deal reported only
+  in the local press, or quoted only in a non-USD currency without a USD figure,
+  will be skipped.
+- **Timing.** 6:00 PM ET catches the full prior day. Deals announced overnight in
+  Asia occasionally get attributed to the following day by the news feed.
+- **Email costs you one extra tap.** A real push notification opens the article
+  directly; email opens Mail, and you tap the button. That is the price of not
+  installing anything. iOS also truncates long subject lines on the lock screen,
+  so the trailing "Tap to read more." may be cut — the companies and the price
+  are what survive, which is the part that matters.
