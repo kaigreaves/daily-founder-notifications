@@ -44,7 +44,69 @@ Step 2 is a single API call with a response schema attached, not an agent — th
 job is one structured extraction, so the model cannot return a shape the sender
 does not expect. About 17k tokens a run, which sits inside Gemini's free tier.
 
-## One-time setup
+## Setup — pick one
+
+**[Option A: run it on this Mac](#option-a--local-mac-recommended)** — no GitHub
+account, no tokens, no repo, no secrets page. Two credentials and one command.
+Runs whenever the Mac is awake.
+
+**[Option B: run it on GitHub Actions](#option-b--github-actions)** — always on,
+independent of your Mac, but needs a GitHub repo, a Personal Access Token, and
+three secrets configured by hand.
+
+The pipeline is identical either way. Only the scheduler differs.
+
+---
+
+## Option A — local Mac (recommended)
+
+### 1. Two credentials
+
+- **Gemini API key** — [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+  → *Create API key* → copy.
+- **Gmail App Password** — see [step 1 below](#1-gmail-app-password-3-minutes-free).
+
+### 2. One command
+
+```bash
+bash "/Users/kaigreaves/Daily Founder Notifications/scripts/setup_local.sh"
+```
+
+It prompts for both credentials with the input hidden, writes them to
+`~/.config/daily-deals/env` with `600` permissions, and schedules a launchd job
+for 6:00 PM daily. Nothing is stored in the repo.
+
+### 3. Test it
+
+```bash
+bash "/Users/kaigreaves/Daily Founder Notifications/scripts/run_daily.sh" --dry-run
+```
+
+Drop `--dry-run` to actually send. Logs land in `~/Library/Logs/daily-deals.log`.
+
+### Managing it
+
+```bash
+launchctl print "gui/$(id -u)/com.kaigreaves.dailydeals" | head -20
+```
+
+To stop it permanently:
+
+```bash
+launchctl bootout "gui/$(id -u)/com.kaigreaves.dailydeals" && rm ~/Library/LaunchAgents/com.kaigreaves.dailydeals.plist
+```
+
+**The catch:** launchd only fires while the Mac is running. If it's asleep at
+6:00 PM the job runs when the machine next wakes, so a closed lid means a late
+notification rather than a lost one — but a Mac that's off all evening skips
+that day. The 7-day fallback covers you: the next successful run picks up the
+biggest deal you haven't been sent yet.
+
+---
+
+## Option B — GitHub Actions
+
+Use this if you want it running whether or not your Mac is on.
 
 I can't create accounts or handle your credentials, so these four are yours.
 Everything else is already built.
@@ -178,6 +240,8 @@ and prints the notification without sending it or recording anything.
 | `.github/workflows/daily-deal.yml` | Schedule, gating, and the four steps |
 | `scripts/fetch_candidates.py` | RSS → filtered, priced candidate list |
 | `scripts/select_deal.py` | Gemini call that picks and labels the winner |
+| `scripts/setup_local.sh` | Option A: stores credentials, schedules launchd |
+| `scripts/run_daily.sh` | Option A: the daily run (also handy for testing) |
 | `scripts/send_notification.py` | Validation gate, template, Gmail SMTP, state |
 | `scripts/common.py` | Time windows, money parsing, dedup keys |
 | `prompts/select_deal.md` | The selection spec the LLM step follows |
