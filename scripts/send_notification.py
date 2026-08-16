@@ -247,7 +247,10 @@ def main():
         return 0
 
     sender = os.environ.get("GMAIL_ADDRESS", "").strip()
-    password = os.environ.get("GMAIL_APP_PASSWORD", "").strip()
+    # Google shows App Passwords as "abcd efgh ijkl mnop". Those spaces are
+    # display formatting, not part of the secret, and SMTP rejects them - so
+    # strip all whitespace rather than just the ends.
+    password = re.sub(r"\s+", "", os.environ.get("GMAIL_APP_PASSWORD", ""))
     recipient = os.environ.get("NOTIFY_TO", "").strip() or sender
 
     if not sender or not password:
