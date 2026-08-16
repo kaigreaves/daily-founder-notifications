@@ -1,3 +1,15 @@
 {
-  "sent": []
+  "sent": [
+    {
+      "sent_at_et": "2026-08-16T18:41:04-04:00",
+      "deal_key": "cursor|spacex",
+      "target_name": "Cursor",
+      "acquirer_name": "SpaceX",
+      "amount_usd_millions": 60000.0,
+      "announced_date": "2026-08-14",
+      "article_url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOV3NyUGdVQzdaclJuV1locDRId2R4LW9BQWd1VWs3bmtHSmo1XzRHamdnd1lJV2ZlOFpEVFBjeTVPSVNTZ3lLelhpZ1VHdmI0SHR3YWdBeVlkdlc4ZkhFNnY3VGk2U0t3aGN4RllYS0QtOHRUa2dESU5rbFZuQXdib28xQWlHVDhrMERpRzZRa29RZzZCWDlybG95eEJPUk5WN1JV?oc=5",
+      "used_fallback": false,
+      "message": "Software company, Cursor, was acquired by Aerospace company, SpaceX, for $60,000 million. Tap to read more."
+    }
+  ]
 }
