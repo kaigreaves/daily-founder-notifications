@@ -81,6 +81,26 @@ def format_millions(value):
     return "{:,}".format(int(round(float(value))))
 
 
+def format_amount(millions):
+    """Split a figure in millions into (number, unit) for the template.
+
+    Anything at or above a billion reads as billions - "$60,000 million" is
+    technically correct and completely unreadable.
+
+        322.0   -> ('322', 'million')
+        920.0   -> ('920', 'million')
+        1050.0  -> ('1.05', 'billion')
+        4100.0  -> ('4.1', 'billion')
+        60000.0 -> ('60', 'billion')
+    """
+    millions = float(millions)
+    if millions >= 1000:
+        billions = millions / 1000.0
+        text = "{:,.2f}".format(billions).rstrip("0").rstrip(".")
+        return text, "billion"
+    return format_millions(millions), "million"
+
+
 # --------------------------------------------------------------------------
 # Text / dedup keys
 # --------------------------------------------------------------------------
@@ -111,6 +131,71 @@ def company_key(name):
 def deal_key(target, acquirer):
     """Stable identity for a deal, order-independent of phrasing."""
     return "{}|{}".format(company_key(target), company_key(acquirer))
+
+
+# --------------------------------------------------------------------------
+# Paywalls
+# --------------------------------------------------------------------------
+
+# Outlets that hard-paywall most business coverage. A link the reader cannot
+# open is worse than a link to a smaller outlet.
+PAYWALLED_SOURCES = {
+    "bloomberg", "wsj", "wall street journal", "ft", "financial times",
+    "nytimes", "new york times", "the information", "barrons", "barron's",
+    "economist", "the economist", "washingtonpost", "washington post",
+    "seekingalpha", "seeking alpha", "businessinsider", "business insider",
+    "insider", "telegraph", "law360", "politico pro",
+    "crain's", "crains", "american banker", "modern healthcare", "statnews",
+    "stat news", "the athletic", "puck", "axios pro", "globes", "nikkei",
+    "handelsblatt", "les echos", "mergermarket", "pitchbook",
+    # The UK Times specifically. A bare "the times" also matches The Times of
+    # India, The Irish Times, and the Seattle Times, none of which belong here.
+    "thetimes", "times of london", "sunday times",
+}
+
+# Reliably free, reputable, and widely read. Used to rank the good options.
+FREE_SOURCES = {
+    "reuters", "apnews", "ap news", "associated press", "cnbc", "bbc",
+    "techcrunch", "the verge", "theverge", "axios", "yahoo", "marketwatch",
+    "investing.com", "cnn", "npr", "guardian", "the guardian", "forbes",
+    "fortune", "businesswire", "business wire", "prnewswire", "pr newswire",
+    "globenewswire", "zdnet", "ars technica", "engadget", "quartz",
+    "fierce", "endpoints", "benzinga", "thestreet", "aljazeera", "dw",
+}
+
+
+# Normalized once so entries written with dots or apostrophes ("investing.com",
+# "barron's") can still match text that has been stripped of punctuation.
+_PAYWALLED_NORM = {normalize(n) for n in PAYWALLED_SOURCES}
+_FREE_NORM = {normalize(n) for n in FREE_SOURCES}
+
+
+def _matches(source, url, names):
+    """Whole-word matching.
+
+    Substring matching is wrong here: "ft" appears inside "Microsoft", which
+    would flag half the tech press as paywalled. Single-word names must match a
+    whole token; multi-word names are matched as a phrase.
+    """
+    blob = normalize("{} {}".format(source or "", url or ""))
+    tokens = set(blob.split())
+    for name in names:
+        if not name:
+            continue
+        if " " in name:
+            if name in blob:
+                return True
+        elif name in tokens:
+            return True
+    return False
+
+
+def is_paywalled(source, url=""):
+    return _matches(source, url, _PAYWALLED_NORM)
+
+
+def is_known_free(source, url=""):
+    return _matches(source, url, _FREE_NORM)
 
 
 # --------------------------------------------------------------------------

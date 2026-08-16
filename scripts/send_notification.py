@@ -28,7 +28,7 @@ from email.utils import formataddr
 from common import (
     DEAL_PATH,
     deal_key as make_deal_key,
-    format_millions,
+    format_amount,
     load_state,
     now_et,
     read_json,
@@ -42,7 +42,7 @@ FROM_NAME = "Daily Deals"
 
 TEMPLATE = (
     "{target_industry} company, {target_name}, was acquired by "
-    "{acquirer_industry} company, {acquirer_name}, for ${amount} million. "
+    "{acquirer_industry} company, {acquirer_name}, for ${amount} {unit}. "
     "Tap to read more."
 )
 
@@ -132,12 +132,14 @@ def validate(deal):
 
 
 def render(deal):
+    amount, unit = format_amount(deal["amount_usd_millions"])
     return TEMPLATE.format(
         target_industry=deal["target_industry"],
         target_name=deal["target_name"],
         acquirer_industry=deal["acquirer_industry"],
         acquirer_name=deal["acquirer_name"],
-        amount=format_millions(deal["amount_usd_millions"]),
+        amount=amount,
+        unit=unit,
     )
 
 

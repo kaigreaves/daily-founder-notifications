@@ -66,15 +66,29 @@ part of the label. For a private-equity or holding-company buyer, use
 
 ## Choosing the article
 
-Pick the **most widely read article about this deal**. You cannot measure
-traffic, so use this proxy, in order:
+Pick the most widely read article about this deal **that the reader can
+actually open**. A paywalled link is a failed notification, no matter how
+prestigious the outlet.
 
-1. Prefer a major outlet with heavy readership: Reuters, Bloomberg, CNBC, WSJ,
-   Financial Times, AP, The New York Times, BBC, Axios, TechCrunch, The Verge.
-2. Prefer the outlet that appears most often across the candidate list for this
-   deal — broad syndication tracks popularity.
-3. Prefer a substantive news article over a bare press release or an
-   aggregator/SEO reprint.
+Apply these in order:
+
+1. **Never pick a candidate with `"paywalled": true`** unless every single
+   article about the chosen deal is paywalled. Bloomberg, WSJ, the FT, The
+   Information, Business Insider, and the NYT are all flagged this way — skip
+   them and take the next best coverage of the same deal.
+2. Prefer `"known_free": true`. These are reputable outlets that publish
+   without a paywall: Reuters, AP, CNBC, BBC, TechCrunch, The Verge, Axios,
+   Yahoo Finance, MarketWatch, CNN, The Guardian, Fortune.
+3. Among the free options, prefer the outlet appearing most often across the
+   candidate list for this deal — broad syndication tracks popularity.
+4. Prefer a substantive news article over a bare press release or an
+   aggregator/SEO reprint. That said, a company's own press release on
+   Business Wire or PR Newswire is always free and always accurate, so it beats
+   a paywalled scoop.
+
+If the only coverage of the biggest deal is paywalled, still pick that deal and
+use the least-restricted link available — do not switch to a smaller deal just
+to get a free link.
 
 `article_url` **must be copied verbatim from the candidate list**. Never invent,
 shorten, or reconstruct a URL. Prefer a direct publisher link over a

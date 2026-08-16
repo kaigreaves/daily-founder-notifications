@@ -158,6 +158,8 @@ def build_prompt(candidates_doc, already_sent):
                 "published_date_et": c["published_date_et"],
                 "parsed_amount_usd_millions": c["parsed_amount_usd_millions"],
                 "is_target_date": c["is_target_date"],
+                "paywalled": c.get("paywalled", False),
+                "known_free": c.get("known_free", False),
             }
         )
 

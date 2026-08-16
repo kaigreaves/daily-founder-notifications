@@ -24,6 +24,8 @@ from common import (
     CANDIDATES_PATH,
     ET,
     LOOKBACK_DAYS,
+    is_known_free,
+    is_paywalled,
     iso,
     largest_amount_usd_millions,
     normalize,
@@ -198,6 +200,8 @@ def shortlist(raw, window_start, window_end):
                 "published_date_et": iso(pub_date),
                 "parsed_amount_usd_millions": round(amount, 2),
                 "is_target_date": pub_date == window_end,
+                "paywalled": is_paywalled(item["source"], item["link"]),
+                "known_free": is_known_free(item["source"], item["link"]),
             }
         )
 

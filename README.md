@@ -5,8 +5,12 @@ acquisition announced the day before. Tapping through opens the most widely
 read article about the deal.
 
 ```
-AI company, Cursor, was acquired by Aerospace company, SpaceX, for $60,000 million. Tap to read more.
+AI company, Cursor, was acquired by Aerospace company, SpaceX, for $60 billion. Tap to read more.
 ```
+
+Figures at or above a billion read as billions; smaller deals read as millions.
+The linked article is always the most widely read coverage that isn't behind a
+paywall.
 
 Delivery is a plain email to your own Gmail, sent over SMTP with an App
 Password — no third-party service, nothing to install, no monthly cost. **The
@@ -250,12 +254,14 @@ and prints the notification without sending it or recording anything.
 
 ## Known rough edges
 
-- **"$60,000 million"** is what the fixed template produces for a $60B deal.
-  Correct per spec, reads oddly. One-line change in `TEMPLATE` /
-  `format_millions` if you want billions above some threshold.
 - **Tap-through links are often `news.google.com`** URLs. They open the article
-  fine on a phone, just with a redirect. The LLM step uses `WebSearch` to find
-  a direct publisher link when it can.
+  fine on a phone, just with a redirect. The publisher URL lives only inside
+  Google's JavaScript payload, so resolving it server-side would mean a
+  scraper that breaks whenever Google changes their page.
+- **Paywall detection is by outlet, not by article.** Known hard-paywall
+  outlets are excluded (see `PAYWALLED_SOURCES` in `scripts/common.py`), but a
+  normally-free outlet can still put one specific piece behind a meter. Add any
+  offender to that set.
 - **Coverage depends on English-language reporting.** A large deal reported only
   in the local press, or quoted only in a non-USD currency without a USD figure,
   will be skipped.
