@@ -21,6 +21,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxPcXk2ZjczaGZYdE1aZDUzS1M4UXFDR3dQcEtVcVgxdDdhdk1FM3JTeFZsU0hKY3NJeXhFQm5CVl9ENVdoN2w4VXkyTDJfZXRQM293Unl3Nk4ta3dfellVTGNDbkV0MGhqU21YLWFfVG1wUVFKVmNvT2kweUI5QzI3V0l1M0FTY1VKMVRKLUFtQnVHcVY1WThhN2hBaw?oc=5",
       "used_fallback": false,
       "message": "Agriculture company, Misr Hytech Seed, was acquired by Agriculture company, Advanta, for $110 million. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-08-17T18:24:32-04:00",
+      "deal_key": "openrouter|stripe",
+      "target_name": "OpenRouter",
+      "acquirer_name": "Stripe",
+      "amount_usd_millions": 7000.0,
+      "announced_date": "2026-08-16",
+      "article_url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxQMlZXRVY0UElQQkRrcFNtUXV4TWtTck1nWWZ1VUNXR3ZiZFZFQ0lrSGRxcV9tN09OU25sa2Q1WWlrZXFFUWQwTmNNZUd5eTJSeXZCeVZESnlteDMtVVNmZU93MHB2RC0tUDM4b1lvNVdvbGpFall4VmJzT25RY1ZWaGROU3hvSG1WMVRHTA?oc=5",
+      "used_fallback": false,
+      "message": "AI company, OpenRouter, was acquired by Fintech company, Stripe, for $7 billion. Tap to read more."
     }
   ]
 }
