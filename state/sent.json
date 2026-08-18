@@ -32,6 +32,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxQMlZXRVY0UElQQkRrcFNtUXV4TWtTck1nWWZ1VUNXR3ZiZFZFQ0lrSGRxcV9tN09OU25sa2Q1WWlrZXFFUWQwTmNNZUd5eTJSeXZCeVZESnlteDMtVVNmZU93MHB2RC0tUDM4b1lvNVdvbGpFall4VmJzT25RY1ZWaGROU3hvSG1WMVRHTA?oc=5",
       "used_fallback": false,
       "message": "AI company, OpenRouter, was acquired by Fintech company, Stripe, for $7 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-08-18T18:23:46-04:00",
+      "deal_key": "ebm papst|madison air",
+      "target_name": "ebm-papst",
+      "acquirer_name": "Madison Air",
+      "amount_usd_millions": 5400.0,
+      "announced_date": "2026-08-17",
+      "article_url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxQbjEyVXhhMWtXRVpOUGtEREJOLW1QVmtUZkRYX0hMTnZwMUhpdmdmTlYzZnVwQlQ5SThURF9QUl96SXFGS3FHMkltdkFNR29uc1hpaHJaekpQTGFjTG9wLUtfRTVoU0E0aEZZQ1FuSnZNazY0MnlUZ18wX0lzYnI3Q2o4aU9oal9vdENaSFl2TEprY3dWMXYtWWFsOEg5aWV0WVlhdDhn?oc=5",
+      "used_fallback": false,
+      "message": "HVAC company, ebm-papst, was acquired by HVAC company, Madison Air, for $5.4 billion. Tap to read more."
     }
   ]
 }
