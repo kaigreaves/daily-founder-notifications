@@ -233,6 +233,7 @@ def load_state():
             return {"sent": []}
     state.setdefault("sent", [])
     state.setdefault("re_sent", [])
+    state.setdefault("skipped", [])
     return state
 
 
@@ -241,6 +242,7 @@ def save_state(state):
     # Keep the file from growing forever; 400 entries is well over a year.
     state["sent"] = state["sent"][-400:]
     state["re_sent"] = state.get("re_sent", [])[-600:]
+    state["skipped"] = state.get("skipped", [])[-200:]
     with open(STATE_PATH, "w", encoding="utf-8") as fh:
         json.dump(state, fh, indent=2, ensure_ascii=False)
         fh.write("\n")

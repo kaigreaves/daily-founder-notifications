@@ -7,6 +7,10 @@ label both companies' industries, and choose the best article to link.
 
 Return a single JSON object matching the required schema. Nothing else.
 
+**Return up to three candidates, ranked best first, in `deals`.** The sender
+takes the first one it can use. Ranking three costs nothing and means one bad
+call does not cost the day's email.
+
 ## What counts as a valid deal
 
 Include only the **acquisition of an operating company** — one company buying
@@ -34,17 +38,22 @@ Reject a candidate if any of these is true:
 Currency must be **US dollars**. If a deal is quoted in another currency and
 the coverage also gives a USD figure, use the USD figure. Otherwise reject it.
 
-## Which deal wins
+## Which deals to return
 
-1. **First preference:** among valid candidates with
-   `is_target_date: true`, take the one with the highest verified purchase
-   price. Set `used_fallback` to `false`.
-2. **Fallback:** if none qualify, widen to every candidate in the window and
-   take the highest-priced valid one that has not already been sent. Set
-   `used_fallback` to `true`.
-3. If nothing at all qualifies, return `{"status": "no_deal", "reason": "..."}`
-   with a one-sentence reason and no other fields. **Do not invent a deal.** An
-   empty result is a correct answer.
+1. **First preference:** among valid candidates with `is_target_date: true`,
+   rank by highest verified purchase price. Set `used_fallback` to `false`.
+2. **Fallback:** if none qualify on the target date, widen to every candidate
+   in the window and rank those. Set `used_fallback` to `true`.
+3. Fill `deals` with up to three, best first. Fewer is fine.
+4. If nothing at all qualifies, return `{"status": "no_deal", "deals": []}`
+   with a one-sentence `reason`. **Do not invent a deal.** An empty result is a
+   correct answer.
+
+**The already-sent list is absolute.** It is given as plain descriptions such
+as "ebm-papst acquired by Madison Air". Match on the companies, not on exact
+wording - the same deal gets reported under many different headlines, and
+returning it again wastes the day. If you suspect a candidate is one of them,
+leave it out and move to the next.
 
 Multiple headlines will describe the same deal. Treat them as one candidate and
 use the best-sourced version of the facts.
@@ -104,7 +113,9 @@ shorten, or reconstruct a URL. Prefer a direct publisher link over a
 - `announced_date` — `YYYY-MM-DD`, the date the deal was announced or closed as
   reported.
 - `confidence` — `high`, `medium`, or `low`. Use `low` if you are unsure the
-  figure is the true purchase price; the send step refuses to send anything
-  marked `low`, which is the correct outcome when you are guessing.
+  figure is the true purchase price; the send step skips anything marked `low`
+  and moves to the next candidate, which is the right outcome when guessing.
+- `target_industry` / `acquirer_industry` — one or two words. Three is
+  tolerated ("Oil and Gas"); beyond that it gets truncated.
 - `reasoning` — one or two sentences: why this deal won and why the price is
   trustworthy.

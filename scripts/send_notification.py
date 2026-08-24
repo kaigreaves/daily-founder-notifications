@@ -76,8 +76,11 @@ def clean_industry(value, field):
     label = re.sub(r"\s+company$", "", label, flags=re.IGNORECASE).strip()
     if not label:
         raise Rejected("{} is empty".format(field))
-    if len(label.split()) > 2:
-        raise Rejected("{} is not a short label: {!r}".format(field, label))
+    # Three words reads fine ("Oil and Gas company"). Longer gets trimmed
+    # rather than rejected - a clumsy label is not a reason to send nothing.
+    words = label.split()
+    if len(words) > 3:
+        label = " ".join(words[:3])
     return label[:1].upper() + label[1:]
 
 
@@ -91,10 +94,7 @@ def clean_name(value, field):
 
 
 def validate(deal):
-    status = deal.get("status", "ok")
-    if status == "no_deal":
-        return None
-
+    """Validate one candidate. Raises Skipped (try the next) or Rejected."""
     missing = [f for f in REQUIRED_FIELDS if deal.get(f) in (None, "")]
     if missing:
         raise Rejected("missing field(s): {}".format(", ".join(missing)))
@@ -359,38 +359,60 @@ def main():
     state = load_state()
 
     # ---- section 1: the company acquisition -----------------------------
-    deal = None
-    company_note = None
-
     if not os.path.exists(args.deal):
         print("ERROR: {} does not exist - the selection step did not run."
               .format(args.deal), file=sys.stderr)
         return 1
 
     raw = read_json(args.deal)
-    try:
-        deal = validate(raw)
-    except Skipped as exc:
-        company_note = "No acquisition sent: {}".format(exc)
-        print(company_note)
-        deal = None
-    except Rejected as exc:
-        print("ERROR: refusing to send - {}".format(exc), file=sys.stderr)
-        print("Deal payload was: {}".format(raw), file=sys.stderr)
-        return 1
 
-    if deal is None and company_note is None:
-        company_note = "No qualifying acquisition in the 7-day window: {}".format(
-            raw.get("reason", "no reason given"))
-        print(company_note)
+    # The selector returns a ranked list. Older files held a single deal at the
+    # top level; accept both so a stale work/ directory still works.
+    candidates = raw.get("deals")
+    if candidates is None:
+        candidates = [raw] if raw.get("target_name") else []
 
-    key = None
-    if deal is not None:
-        key = make_deal_key(deal["target_name"], deal["acquirer_name"])
-        if key in sent_keys(state):
-            print("Already sent this acquisition ({}).".format(key))
-            deal, key = None, None
-            company_note = "No new acquisition today."
+    already = sent_keys(state)
+    deal, key = None, None
+    notes, newly_skipped = [], []
+
+    if raw.get("status") == "no_deal":
+        notes.append(raw.get("reason") or "no qualifying acquisition")
+
+    for i, cand in enumerate(candidates, 1):
+        try:
+            checked = validate(cand)
+        except Skipped as exc:
+            notes.append("#{} skipped: {}".format(i, exc))
+            continue
+        except Rejected as exc:
+            notes.append("#{} rejected: {}".format(i, exc))
+            # Remember it so tomorrow's selection does not offer it again and
+            # stall the whole system on one bad record.
+            t, a = cand.get("target_name"), cand.get("acquirer_name")
+            if t and a:
+                newly_skipped.append(make_deal_key(t, a))
+            continue
+
+        candidate_key = make_deal_key(checked["target_name"],
+                                      checked["acquirer_name"])
+        if candidate_key in already:
+            notes.append("#{} already sent: {} <- {}".format(
+                i, checked["target_name"], checked["acquirer_name"]))
+            continue
+
+        deal, key = checked, candidate_key
+        print("Using candidate #{} of {}.".format(i, len(candidates)))
+        break
+
+    for n in notes:
+        print("  {}".format(n))
+
+    company_note = None
+    if deal is None:
+        company_note = ("No new acquisition today."
+                        if notes else "No qualifying acquisition yesterday.")
+        print(company_note)
 
     # ---- section 2: property deals --------------------------------------
     re_deals = load_realestate(args.realestate, re_sent_keys(state))
@@ -467,6 +489,12 @@ def main():
 
     if re_deals:
         state.setdefault("re_sent", []).extend(d["key"] for d in re_deals)
+
+    if newly_skipped:
+        skipped = state.setdefault("skipped", [])
+        skipped.extend(k for k in newly_skipped if k not in skipped)
+        print("Recorded {} deal(s) as unusable so they are not retried."
+              .format(len(newly_skipped)))
 
     save_state(state)
     print("Recorded in state/sent.json")

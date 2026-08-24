@@ -31,7 +31,6 @@ from common import (
     load_state,
     re_sent_keys,
     read_json,
-    sent_keys,
     write_json,
 )
 
@@ -45,11 +44,9 @@ DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "").strip() or "gemini-2.5-flash"
 MAX_CANDIDATES = 90
 SUMMARY_CHARS = 220
 
-COMPANY_SCHEMA = {
+_COMPANY_DEAL = {
     "type": "OBJECT",
     "properties": {
-        "status": {"type": "STRING", "enum": ["ok", "no_deal"]},
-        "reason": {"type": "STRING"},
         "target_name": {"type": "STRING"},
         "target_industry": {"type": "STRING"},
         "acquirer_name": {"type": "STRING"},
@@ -58,9 +55,27 @@ COMPANY_SCHEMA = {
         "announced_date": {"type": "STRING"},
         "article_url": {"type": "STRING"},
         "article_source": {"type": "STRING"},
-        "used_fallback": {"type": "BOOLEAN"},
         "confidence": {"type": "STRING", "enum": ["high", "medium", "low"]},
         "reasoning": {"type": "STRING"},
+    },
+    "required": [
+        "target_name", "target_industry", "acquirer_name",
+        "acquirer_industry", "amount_usd_millions", "article_url",
+    ],
+}
+
+# A ranked list, not one pick. If the top choice turns out to have been sent
+# already - the model matching opaque dedup keys against headlines is not
+# reliable - the sender simply walks to the next one. A single missed match
+# used to mean no email at all, silently, for as long as that deal stayed the
+# biggest in the window.
+COMPANY_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        "status": {"type": "STRING", "enum": ["ok", "no_deal"]},
+        "reason": {"type": "STRING"},
+        "used_fallback": {"type": "BOOLEAN"},
+        "deals": {"type": "ARRAY", "items": _COMPANY_DEAL},
     },
     "required": ["status"],
 }
@@ -107,9 +122,10 @@ MODES = {
         "schema": COMPANY_SCHEMA,
         "candidates": CANDIDATES_PATH,
         "out": DEAL_PATH,
-        "seen": sent_keys,
-        "seen_label": "Deal keys already sent (never select these again)",
-        "empty": {"status": "no_deal",
+        "seen": company_seen,
+        "seen_label": "Acquisitions already sent, and deals that failed "
+                      "validation (never return any of these again)",
+        "empty": {"status": "no_deal", "deals": [],
                   "reason": "No priced acquisition candidates in the window."},
     },
     "realestate": {
@@ -123,6 +139,24 @@ MODES = {
                   "reason": "No priced property candidates in the window."},
     },
 }
+
+
+def company_seen(state):
+    """Deals already sent, phrased the way a headline would phrase them.
+
+    Handing the model opaque keys like "ebm papst|madison air" and expecting it
+    to match them against prose was optimistic; plain names are far easier to
+    honour. Keys are kept as a fallback for older entries.
+    """
+    out = set()
+    for e in state.get("sent", []):
+        target, acquirer = e.get("target_name"), e.get("acquirer_name")
+        if target and acquirer:
+            out.add("{} acquired by {}".format(target, acquirer))
+        elif e.get("deal_key"):
+            out.add(e["deal_key"])
+    out.update(state.get("skipped", []))
+    return out
 
 
 def api_key():
@@ -258,13 +292,17 @@ def report(mode, result):
         return
 
     if mode == "company":
-        print("Result: {} ({}) acquired by {} ({}) for ${:,.0f}M".format(
-            result.get("target_name"), result.get("target_industry"),
-            result.get("acquirer_name"), result.get("acquirer_industry"),
-            float(result.get("amount_usd_millions") or 0)))
-        print("Confidence: {} | fallback: {}".format(
-            result.get("confidence"), result.get("used_fallback")))
-        print("Reasoning:  {}".format(result.get("reasoning", "")))
+        deals = result.get("deals", [])
+        print("Result: {} ranked acquisition candidate(s), fallback={}".format(
+            len(deals), result.get("used_fallback")))
+        for i, d in enumerate(deals, 1):
+            print("  {}. ${:>9,.0f}M  {} ({}) <- {} ({})  [{}]".format(
+                i, float(d.get("amount_usd_millions") or 0),
+                d.get("target_name"), d.get("target_industry"),
+                d.get("acquirer_name"), d.get("acquirer_industry"),
+                d.get("confidence")))
+            if d.get("reasoning"):
+                print("       {}".format(d["reasoning"]))
     else:
         deals = result.get("deals", [])
         print("Result: {} property deal(s)".format(len(deals)))

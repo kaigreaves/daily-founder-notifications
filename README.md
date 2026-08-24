@@ -54,7 +54,19 @@ what it is actually good at.
 
 Step 2 is a single API call with a response schema attached, not an agent — the
 job is one structured extraction, so the model cannot return a shape the sender
-does not expect. About 17k tokens a run, which sits inside Gemini's free tier.
+does not expect. About 25k tokens a day across both calls, inside the free tier.
+
+**The selector returns a ranked list, not one pick, and the sender walks it.**
+That matters: the dedup list is given to the model as prose, and when it once
+failed to recognise a deal it had already sent, the sender found the duplicate,
+exited 0, wrote no state, and sent nothing — silently, every day, for as long
+as that deal stayed the biggest in the window. Now a bad first pick just costs
+one list position. Anything wrong with the *model's output* skips to the next
+candidate and exits clean; only infrastructure problems (no credentials,
+unreachable Gmail) fail the run.
+
+Deals that fail validation are recorded in `state.skipped` and excluded from
+future selections, so one malformed record cannot stall the system again.
 
 ## Setup — pick one
 
