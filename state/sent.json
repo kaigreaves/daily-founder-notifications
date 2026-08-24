@@ -43,6 +43,23 @@
       "article_url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxQbjEyVXhhMWtXRVpOUGtEREJOLW1QVmtUZkRYX0hMTnZwMUhpdmdmTlYzZnVwQlQ5SThURF9QUl96SXFGS3FHMkltdkFNR29uc1hpaHJaekpQTGFjTG9wLUtfRTVoU0E0aEZZQ1FuSnZNazY0MnlUZ18wX0lzYnI3Q2o4aU9oal9vdENaSFl2TEprY3dWMXYtWWFsOEg5aWV0WVlhdDhn?oc=5",
       "used_fallback": false,
       "message": "HVAC company, ebm-papst, was acquired by HVAC company, Madison Air, for $5.4 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-08-23T21:27:41-04:00",
+      "deal_key": "cbiz|grant thornton",
+      "target_name": "CBIZ",
+      "acquirer_name": "Grant Thornton",
+      "amount_usd_millions": 5000.0,
+      "announced_date": "2026-08-22",
+      "article_url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPREZ0cm1uVlJNNVZsMmNPUldwT1lQaVI2dUNjV0FGbG51d0FEV3o0dnhGMjh0NjNVYWRnUHl4ZTYtYmUzcm5RMVpPQWlHdHQtUThtWjBKRjA1XzQxcTktdG1kUndiU0xmd1JBWi1vMnlIMnNjeWxLRURnMndaajhka1Rjd2l5d9IBhgFBVV95cUxPREZ0cm1uVlJNNVZsMmNPUldwT1lQaVI2dUNjV0FGbG51d0FEV3o0dnhGMjh0NjNVYWRnUHl4ZTYtYmUzcm5RMVpPQWlHdHQtUThtWjBKRjA1XzQxcTktdG1kUndiU0xmd1JBWi1vMnlIMnNjeWxLRURnMndaajhka1Rjd2l5dw?oc=5",
+      "used_fallback": false,
+      "message": "Accounting company, CBIZ, was acquired by Accounting company, Grant Thornton, for $5 billion. Tap to read more."
     }
-  ]
+  ],
+  "re_sent": [
+    "one marina park drive|boston",
+    "san jose senior living hub|san jose",
+    "phoenix apartment complex|phoenix"
+  ],
+  "skipped": []
 }
