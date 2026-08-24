@@ -116,6 +116,24 @@ REALESTATE_SCHEMA = {
     "required": ["status"],
 }
 
+def company_seen(state):
+    """Deals already sent, phrased the way a headline would phrase them.
+
+    Handing the model opaque keys like "ebm papst|madison air" and expecting it
+    to match them against prose was optimistic; plain names are far easier to
+    honour. Keys are kept as a fallback for older entries.
+    """
+    out = set()
+    for e in state.get("sent", []):
+        target, acquirer = e.get("target_name"), e.get("acquirer_name")
+        if target and acquirer:
+            out.add("{} acquired by {}".format(target, acquirer))
+        elif e.get("deal_key"):
+            out.add(e["deal_key"])
+    out.update(state.get("skipped", []))
+    return out
+
+
 MODES = {
     "company": {
         "prompt": os.path.join(REPO_ROOT, "prompts", "select_deal.md"),
@@ -139,24 +157,6 @@ MODES = {
                   "reason": "No priced property candidates in the window."},
     },
 }
-
-
-def company_seen(state):
-    """Deals already sent, phrased the way a headline would phrase them.
-
-    Handing the model opaque keys like "ebm papst|madison air" and expecting it
-    to match them against prose was optimistic; plain names are far easier to
-    honour. Keys are kept as a fallback for older entries.
-    """
-    out = set()
-    for e in state.get("sent", []):
-        target, acquirer = e.get("target_name"), e.get("acquirer_name")
-        if target and acquirer:
-            out.add("{} acquired by {}".format(target, acquirer))
-        elif e.get("deal_key"):
-            out.add(e["deal_key"])
-    out.update(state.get("skipped", []))
-    return out
 
 
 def api_key():
@@ -352,22 +352,51 @@ def main():
     print("Already seen: {}".format(len(already_seen)))
     print("Prompt size:  {:,} chars".format(len(prompt)))
 
-    payload = {
-        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-        "generationConfig": {
+    def make_payload(with_schema):
+        cfg_gen = {
             "temperature": 0,
             "response_mime_type": "application/json",
-            "response_schema": cfg["schema"],
-        },
-    }
+        }
+        if with_schema:
+            cfg_gen["response_schema"] = cfg["schema"]
+        text = prompt if with_schema else (
+            prompt
+            + "\n\nReturn JSON matching exactly this schema:\n"
+            + json.dumps(cfg["schema"], indent=2)
+        )
+        return {
+            "contents": [{"role": "user", "parts": [{"text": text}]}],
+            "generationConfig": cfg_gen,
+        }
+
+    schema_on = [True]
 
     def call(model):
         return post_json(
-            "{}/models/{}:generateContent".format(API_ROOT, model), payload, key)
+            "{}/models/{}:generateContent".format(API_ROOT, model),
+            make_payload(schema_on[0]), key)
+
+    def call_with_recovery(model):
+        """One request, retried without response_schema if the API rejects it.
+
+        Some API versions reject parts of a nested response_schema. JSON mode
+        with the schema written into the prompt gets the same result without
+        depending on that support.
+        """
+        try:
+            return call(model)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 400 or not schema_on[0]:
+                raise
+            body = exc.read().decode("utf-8", "replace")
+            print("\nHTTP 400 with response_schema attached:\n{}".format(body[:800]))
+            print("Retrying in plain JSON mode with the schema in the prompt.")
+            schema_on[0] = False
+            return call(model)
 
     try:
         try:
-            response = call(args.model)
+            response = call_with_recovery(args.model)
         except urllib.error.HTTPError as exc:
             if exc.code != 404:
                 raise
@@ -382,7 +411,7 @@ def main():
                       .format(", ".join(models) or "(nothing)"), file=sys.stderr)
                 return 1
             print("Retrying with {}".format(fallback))
-            response = call(fallback)
+            response = call_with_recovery(fallback)
             print("\nNOTE: {} worked but {} did not. To skip this lookup in "
                   "future, set a repo variable GEMINI_MODEL to {}."
                   .format(fallback, args.model, fallback))

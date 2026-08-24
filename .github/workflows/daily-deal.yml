@@ -72,6 +72,7 @@ jobs:
           python-version: "3.11"
 
       - name: Check configuration
+        id: config
         if: steps.gate.outputs.should_run == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -109,11 +110,21 @@ jobs:
           echo ""
           echo "Configuration looks good."
 
+          # Import every module before spending an API call. py_compile only
+          # checks syntax; a name referenced before it is defined still parses
+          # fine and then dies at runtime, which is exactly how this pipeline
+          # broke once.
+          echo ""
+          echo "Import check:"
+          PYTHONPATH=scripts python3 -c "import common, fetch_candidates, select_deal, send_notification; print('  all modules import cleanly')"
+
       - name: Fetch and shortlist candidates
+        id: fetch
         if: steps.gate.outputs.should_run == 'true'
         run: python3 scripts/fetch_candidates.py
 
       - name: Select the winning deal
+        id: select
         if: steps.gate.outputs.should_run == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -124,11 +135,13 @@ jobs:
       # for real-estate feeds from blocking the acquisition email, which is
       # the part that must not fail.
       - name: Fetch property candidates
+        id: refetch
         if: steps.gate.outputs.should_run == 'true'
         continue-on-error: true
         run: python3 scripts/fetch_candidates.py --mode realestate
 
       - name: Select property deals
+        id: reselect
         if: steps.gate.outputs.should_run == 'true'
         continue-on-error: true
         env:
@@ -137,6 +150,7 @@ jobs:
         run: python3 scripts/select_deal.py --mode realestate
 
       - name: Send the notification
+        id: send
         if: steps.gate.outputs.should_run == 'true'
         env:
           GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
@@ -150,6 +164,7 @@ jobs:
           fi
 
       - name: Record the run
+        id: record
         if: steps.gate.outputs.should_run == 'true' && inputs.dry_run != true
         run: |
           # Written even on a no-deal day: it is both the "already ran today"
@@ -165,6 +180,34 @@ jobs:
             git pull --rebase --autostash origin main || true
             git push
           fi
+
+      # Puts the outcome of every step on the run's front page, so a failure
+      # can be read without expanding anything.
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Daily deal run"
+            echo ""
+            echo "Gate decision: \`${{ steps.gate.outputs.should_run }}\`"
+            echo ""
+            echo "| Step | Result |"
+            echo "| --- | --- |"
+            echo "| Check configuration | ${{ steps.config.outcome || 'skipped' }} |"
+            echo "| Fetch acquisitions | ${{ steps.fetch.outcome || 'skipped' }} |"
+            echo "| Select acquisition | ${{ steps.select.outcome || 'skipped' }} |"
+            echo "| Fetch property | ${{ steps.refetch.outcome || 'skipped' }} |"
+            echo "| Select property | ${{ steps.reselect.outcome || 'skipped' }} |"
+            echo "| Send email | ${{ steps.send.outcome || 'skipped' }} |"
+            echo "| Record run | ${{ steps.record.outcome || 'skipped' }} |"
+            echo ""
+            if [ "${{ job.status }}" != "success" ]; then
+              echo "### Something failed"
+              echo ""
+              echo "The first step above showing \`failure\` is the one to open."
+              echo "Its log ends with a line starting \`ERROR:\` explaining why."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload run details for debugging
         if: always() && steps.gate.outputs.should_run == 'true'
