@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Pull M&A headlines from free RSS feeds and shortlist the priced deals.
+"""Pull deal headlines from free RSS feeds and shortlist the priced ones.
 
 Deliberately stdlib-only: no API keys, no pip install, nothing to rot.
 
-Python does the numeric work (parsing "$4.1 billion" into 4100) and the
-coarse filtering. The LLM step that follows only has to validate the top
-handful and label industries, which keeps it cheap and hard to derail.
+Python does the numeric work (parsing "$4.1 billion" into 4100) and the coarse
+filtering. The LLM step that follows only has to validate the top handful,
+which keeps it cheap and hard to derail.
 
-Output: work/candidates.json
+Two modes:
+  company    - acquisitions of operating companies, worldwide (the headline)
+  realestate - property transactions in the US and Canada (the second section)
+
+    python3 scripts/fetch_candidates.py                  # company
+    python3 scripts/fetch_candidates.py --mode realestate
 """
 
 import argparse
@@ -24,6 +29,7 @@ from common import (
     CANDIDATES_PATH,
     ET,
     LOOKBACK_DAYS,
+    RE_CANDIDATES_PATH,
     is_known_free,
     is_paywalled,
     iso,
@@ -39,7 +45,13 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/126.0 Safari/537.36"
 )
 
-GOOGLE_NEWS_QUERIES = [
+MAX_CANDIDATES = 120
+
+# --------------------------------------------------------------------------
+# Mode: company acquisitions
+# --------------------------------------------------------------------------
+
+COMPANY_QUERIES = [
     '"to acquire" ("billion" OR "million") when:{days}d',
     '"acquired by" ("billion" OR "million") when:{days}d',
     '"acquisition of" ("billion" OR "million") when:{days}d',
@@ -49,22 +61,19 @@ GOOGLE_NEWS_QUERIES = [
     '"definitive agreement" acquire when:{days}d',
 ]
 
-# Direct publisher feeds. Any of these may 404 or rename without warning;
-# failures are logged and skipped so Google News always carries the run.
-STATIC_FEEDS = [
+COMPANY_FEEDS = [
     "https://www.prnewswire.com/rss/financial-services-latest-news/acquisitions-mergers-and-takeovers-list.rss",
     "https://www.globenewswire.com/RssFeed/subjectcode/1-Mergers%20And%20Acquisitions/feedTitle/GlobeNewswire%20-%20Mergers%20and%20Acquisitions",
 ]
 
-# Title must look like a company changing hands.
-ACQUISITION_RE = re.compile(
+COMPANY_INCLUDE = re.compile(
     r"\b(acquir\w*|acquisition|takeover|to buy|buys|bought|merger|merge[sd]?|"
     r"purchase[sd]?|sold to|sells)\b",
     re.IGNORECASE,
 )
 
-# Headlines that carry a dollar figure but are not a company sale.
-EXCLUDE_RE = re.compile(
+# Headlines carrying a dollar figure that is not a company sale price.
+COMPANY_EXCLUDE = re.compile(
     r"\b(raises|raised|funding round|series [a-z]\b|ipo|valuation|valued at|"
     r"buyback|share repurchase|stake|minority interest|joint venture|"
     r"contract|order|loan|bond|debt offering|dividend|lawsuit|settlement|"
@@ -73,11 +82,85 @@ EXCLUDE_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Under this, it's not going to be the day's biggest deal anyway. Dropping
-# small figures kills most parse noise ("$5 million contract" etc).
-MIN_AMOUNT_MILLIONS = 50.0
+# --------------------------------------------------------------------------
+# Mode: US / Canada real estate
+# --------------------------------------------------------------------------
 
-MAX_CANDIDATES = 120
+REALESTATE_QUERIES = [
+    '"office tower" (sold OR sells OR acquired OR trades) million when:{days}d',
+    '"apartment" (complex OR portfolio OR community) sold million when:{days}d',
+    '"industrial" (portfolio OR warehouse OR park) (sold OR acquired) million when:{days}d',
+    '"shopping center" OR "retail center" sold million when:{days}d',
+    '"data center" (campus OR site OR portfolio) (sold OR acquired) million when:{days}d',
+    '"commercial real estate" (sale OR sold OR trades) million when:{days}d',
+    '"hotel" (sold OR acquired OR trades) million when:{days}d',
+    '"office building" sold million when:{days}d',
+    '"multifamily" (sold OR acquired) million when:{days}d',
+    'Toronto OR Vancouver OR Calgary OR Montreal (office OR industrial OR apartment) sold million when:{days}d',
+    '"real estate" "sale price" million when:{days}d',
+]
+
+REALESTATE_FEEDS = [
+    "https://therealdeal.com/feed/",
+    "https://commercialobserver.com/feed/",
+    "https://renx.ca/feed",
+]
+
+REALESTATE_INCLUDE = re.compile(
+    r"\b(sold|sells|sale|acquir\w*|buys|bought|purchase[sd]?|trades|"
+    r"changes hands|snaps up|picks up|lands|refinanc\w*)\b",
+    re.IGNORECASE,
+)
+
+# In real-estate mode a property IS the asset, so the company-mode exclusions
+# would throw away everything. Only genuine non-transactions are filtered.
+REALESTATE_EXCLUDE = re.compile(
+    r"\b(lawsuit|settlement|foreclosure|bankrupt\w*|eviction|zoning|"
+    r"rent control|forecast|survey|index|median (home|price)|"
+    r"mortgage rate|listed for|asking price|seeks|proposes|plans to build|"
+    r"groundbreaking|topping out|ipo|earnings|dividend)\b",
+    re.IGNORECASE,
+)
+
+# Keeps the shortlist to North America. Property deals are intensely local, so
+# a place name in the headline is a reliable signal.
+NORTH_AMERICA_RE = re.compile(
+    r"\b(u\.?s\.?|usa|america\w*|canada|canadian|"
+    r"manhattan|brooklyn|queens|bronx|new york|nyc|los angeles|san francisco|"
+    r"chicago|boston|miami|dallas|houston|austin|seattle|denver|atlanta|"
+    r"phoenix|philadelphia|washington|san diego|portland|nashville|charlotte|"
+    r"las vegas|orlando|tampa|minneapolis|detroit|san jose|sacramento|"
+    r"salt lake|kansas city|st\.? louis|pittsburgh|baltimore|columbus|"
+    r"indianapolis|raleigh|jacksonville|new jersey|connecticut|texas|"
+    r"california|florida|illinois|georgia|arizona|nevada|colorado|"
+    r"toronto|vancouver|montreal|calgary|edmonton|ottawa|winnipeg|"
+    r"halifax|victoria|mississauga|brampton|hamilton|quebec|ontario|"
+    r"alberta|british columbia|manitoba|saskatchewan)\b",
+    re.IGNORECASE,
+)
+
+MODES = {
+    "company": {
+        "queries": COMPANY_QUERIES,
+        "feeds": COMPANY_FEEDS,
+        "include": COMPANY_INCLUDE,
+        "exclude": COMPANY_EXCLUDE,
+        "geo": None,
+        "min_amount": 50.0,
+        "out": CANDIDATES_PATH,
+        "label": "company acquisitions (worldwide)",
+    },
+    "realestate": {
+        "queries": REALESTATE_QUERIES,
+        "feeds": REALESTATE_FEEDS,
+        "include": REALESTATE_INCLUDE,
+        "exclude": REALESTATE_EXCLUDE,
+        "geo": NORTH_AMERICA_RE,
+        "min_amount": 25.0,
+        "out": RE_CANDIDATES_PATH,
+        "label": "real estate (US + Canada)",
+    },
+}
 
 
 def fetch(url, timeout=15):
@@ -147,10 +230,10 @@ def google_news_url(query):
     )
 
 
-def collect(days):
+def collect(cfg, days):
     raw = []
-    urls = [google_news_url(q.format(days=days)) for q in GOOGLE_NEWS_QUERIES]
-    urls += STATIC_FEEDS
+    urls = [google_news_url(q.format(days=days)) for q in cfg["queries"]]
+    urls += cfg["feeds"]
 
     for url in urls:
         label = url[:95]
@@ -163,7 +246,7 @@ def collect(days):
     return raw
 
 
-def shortlist(raw, window_start, window_end):
+def shortlist(raw, cfg, window_start, window_end):
     seen_titles = set()
     out = []
 
@@ -176,13 +259,15 @@ def shortlist(raw, window_start, window_end):
             continue
 
         blob = "{} {}".format(item["title"], item["summary"])
-        if not ACQUISITION_RE.search(item["title"]):
+        if not cfg["include"].search(item["title"]):
             continue
-        if EXCLUDE_RE.search(blob):
+        if cfg["exclude"].search(blob):
+            continue
+        if cfg["geo"] is not None and not cfg["geo"].search(blob):
             continue
 
         amount = largest_amount_usd_millions(blob)
-        if amount is None or amount < MIN_AMOUNT_MILLIONS:
+        if amount is None or amount < cfg["min_amount"]:
             continue
 
         key = normalize(item["title"])[:110]
@@ -214,24 +299,29 @@ def shortlist(raw, window_start, window_end):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--mode", choices=sorted(MODES), default="company")
     ap.add_argument(
         "--days", type=int, default=LOOKBACK_DAYS + 1,
         help="How many days of news to pull (default covers the fallback window).",
     )
-    ap.add_argument("--out", default=CANDIDATES_PATH)
+    ap.add_argument("--out", default=None)
     args = ap.parse_args()
+
+    cfg = MODES[args.mode]
+    out_path = args.out or cfg["out"]
 
     now = now_et()
     tdate = target_date(now)
     window_start = tdate - timedelta(days=LOOKBACK_DAYS - 1)
 
+    print("Mode:            {} - {}".format(args.mode, cfg["label"]))
     print("Run time (ET):   {}".format(now.isoformat(timespec="seconds")))
     print("Target date:     {}".format(iso(tdate)))
     print("Fallback window: {} .. {}".format(iso(window_start), iso(tdate)))
     print("Fetching feeds...")
 
-    raw = collect(args.days)
-    candidates = shortlist(raw, window_start, tdate)
+    raw = collect(cfg, args.days)
+    candidates = shortlist(raw, cfg, window_start, tdate)
 
     on_target = sum(1 for c in candidates if c["is_target_date"])
     print(
@@ -247,6 +337,7 @@ def main():
         )
 
     payload = {
+        "mode": args.mode,
         "generated_at_et": now.isoformat(timespec="seconds"),
         "target_date": iso(tdate),
         "window_start": iso(window_start),
@@ -254,8 +345,8 @@ def main():
         "candidate_count": len(candidates),
         "candidates": candidates,
     }
-    write_json(args.out, payload)
-    print("\nWrote {}".format(args.out))
+    write_json(out_path, payload)
+    print("\nWrote {}".format(out_path))
 
     if not candidates:
         print("No priced candidates found in the window.", file=sys.stderr)

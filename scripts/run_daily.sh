@@ -25,21 +25,31 @@ echo "Run started $(date '+%Y-%m-%d %H:%M:%S %Z')"
 echo "================================================================"
 
 echo
-echo "--- 1/3  fetching candidates ---"
+echo "--- 1/5  fetching acquisition candidates ---"
 if ! python3 scripts/fetch_candidates.py; then
   echo "FAILED at fetch step." >&2
   exit 1
 fi
 
 echo
-echo "--- 2/3  selecting the deal ---"
+echo "--- 2/5  selecting the acquisition ---"
 if ! python3 scripts/select_deal.py; then
   echo "FAILED at selection step." >&2
   exit 1
 fi
 
 echo
-echo "--- 3/3  sending ---"
+echo "--- 3/5  fetching property candidates ---"
+python3 scripts/fetch_candidates.py --mode realestate || \
+  echo "WARNING: property fetch failed - the email will skip that section."
+
+echo
+echo "--- 4/5  selecting property deals ---"
+python3 scripts/select_deal.py --mode realestate || \
+  echo "WARNING: property selection failed - the email will skip that section."
+
+echo
+echo "--- 5/5  sending ---"
 if ! python3 scripts/send_notification.py "$@"; then
   echo "FAILED at send step." >&2
   exit 1

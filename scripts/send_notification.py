@@ -27,10 +27,13 @@ from email.utils import formataddr
 
 from common import (
     DEAL_PATH,
+    RE_DEALS_PATH,
     deal_key as make_deal_key,
     format_amount,
     load_state,
     now_et,
+    property_key,
+    re_sent_keys,
     read_json,
     save_state,
     sent_keys,
@@ -159,6 +162,125 @@ def resolve_url(url, timeout=10):
     return url
 
 
+def load_realestate(path, already_seen):
+    """Up to three property deals for the second section. Optional: a missing
+    or malformed file drops the section rather than failing the send."""
+    if not path or not os.path.exists(path):
+        return []
+    try:
+        doc = read_json(path)
+    except (ValueError, OSError) as exc:
+        print("WARNING: could not read {}: {}".format(path, exc), file=sys.stderr)
+        return []
+
+    if doc.get("status") == "no_deal":
+        return []
+
+    out = []
+    for d in doc.get("deals", []) or []:
+        name = str(d.get("property_name", "")).strip()
+        city = str(d.get("city", "")).strip()
+        if not name or not city:
+            continue
+        try:
+            amount = float(d.get("amount_usd_millions"))
+        except (TypeError, ValueError):
+            continue
+        if amount <= 0:
+            continue
+        url = str(d.get("article_url", "")).strip()
+        if not url.lower().startswith(("http://", "https://")):
+            continue
+
+        key = property_key(name, city)
+        if key in already_seen:
+            continue
+
+        out.append({
+            "key": key,
+            "property_name": name,
+            "city": city,
+            "region": str(d.get("region", "")).strip(),
+            "country": str(d.get("country", "")).strip(),
+            "property_type": str(d.get("property_type", "")).strip() or "Property",
+            "amount_usd_millions": amount,
+            "currency_note": str(d.get("currency_note", "")).strip(),
+            "buyer": str(d.get("buyer", "")).strip() or "Undisclosed",
+            "seller": str(d.get("seller", "")).strip() or "Undisclosed",
+            "article_url": url,
+            "article_source": str(d.get("article_source", "")).strip(),
+            "why_notable": str(d.get("why_notable", "")).strip(),
+        })
+
+    out.sort(key=lambda d: d["amount_usd_millions"], reverse=True)
+    return out[:3]
+
+
+def realestate_lines(deals):
+    """Plain-text rendering of the property section."""
+    lines = []
+    for d in deals:
+        amount, unit = format_amount(d["amount_usd_millions"])
+        where = ", ".join(x for x in (d["city"], d["region"]) if x)
+        lines.append("* {} - {}".format(d["property_name"], where))
+        lines.append("  {} | ${} {}{}".format(
+            d["property_type"], amount, unit,
+            "  ({})".format(d["currency_note"]) if d["currency_note"] else ""))
+        lines.append("  {} bought from {}".format(d["buyer"], d["seller"]))
+        if d["why_notable"]:
+            lines.append("  {}".format(d["why_notable"]))
+        lines.append("  {}".format(d["article_url"]))
+        lines.append("")
+    return lines
+
+
+def realestate_html(deals):
+    if not deals:
+        return ""
+    cards = []
+    for d in deals:
+        amount, unit = format_amount(d["amount_usd_millions"])
+        where = ", ".join(x for x in (d["city"], d["region"], d["country"]) if x)
+        note = (' <span style="color:#86868b;">({})</span>'.format(
+            escape(d["currency_note"])) if d["currency_note"] else "")
+        why = ('<p style="margin:8px 0 0;font-size:14px;line-height:1.45;'
+               'color:#3a3a3c;">{}</p>'.format(escape(d["why_notable"]))
+               if d["why_notable"] else "")
+        cards.append("""
+    <div style="border-top:1px solid #e5e5ea;padding:16px 0 4px;">
+      <p style="margin:0;font-size:16px;font-weight:600;color:#1d1d1f;">
+        <a href="{url}" style="color:#1d1d1f;text-decoration:none;">{name}</a>
+      </p>
+      <p style="margin:4px 0 0;font-size:13px;color:#86868b;">
+        {where} &middot; {ptype}
+      </p>
+      <p style="margin:8px 0 0;font-size:20px;font-weight:600;color:#0071e3;">
+        ${amount} {unit}{note}
+      </p>
+      <p style="margin:6px 0 0;font-size:14px;color:#3a3a3c;">
+        {buyer} &larr; {seller}
+      </p>
+      {why}
+      <p style="margin:10px 0 0;font-size:14px;">
+        <a href="{url}" style="color:#0071e3;text-decoration:none;">Read it &rarr;</a>
+      </p>
+    </div>""".format(
+            url=escape(d["article_url"]),
+            name=escape(d["property_name"]),
+            where=escape(where),
+            ptype=escape(d["property_type"]),
+            amount=amount, unit=unit, note=note,
+            buyer=escape(d["buyer"]), seller=escape(d["seller"]),
+            why=why,
+        ))
+
+    return """
+    <p style="margin:32px 0 4px;font-size:12px;font-weight:700;
+              letter-spacing:0.08em;text-transform:uppercase;color:#86868b;">
+      Biggest property deals &middot; US &amp; Canada
+    </p>{cards}""".format(cards="".join(cards))
+
+
 def escape(text):
     return (
         str(text)
@@ -169,34 +291,51 @@ def escape(text):
     )
 
 
-def build_message(subject, url, deal, sender, recipient):
+def build_message(subject, headline, url, deal, re_deals, sender, recipient):
+    """`headline` is the lead sentence; `subject` may differ on days with no
+    company deal, where the property section carries the email on its own."""
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = formataddr((FROM_NAME, sender))
     msg["To"] = recipient
 
-    meta_bits = [b for b in (deal["article_source"], deal["announced_date"]) if b]
-    meta = "  ·  ".join(meta_bits)
+    meta = ""
+    if deal:
+        meta = "  \u00b7  ".join(
+            b for b in (deal["article_source"], deal["announced_date"]) if b)
 
-    msg.set_content(
-        "{}\n\n{}\n\n{}\n".format(subject, url, meta or "")
-    )
+    text = [headline, ""]
+    if url:
+        text += [url, ""]
+    if meta:
+        text += [meta, ""]
+    if re_deals:
+        text += ["", "BIGGEST PROPERTY DEALS - US & CANADA", ""]
+        text += realestate_lines(re_deals)
+    msg.set_content("\n".join(text) + "\n")
 
-    msg.add_alternative(
-        """\
-<html><body style="margin:0;padding:24px;background:#f5f5f7;
- font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:14px;
-              padding:28px;">
+    if deal and url:
+        lead = """
     <p style="margin:0 0 24px;font-size:19px;line-height:1.45;color:#1d1d1f;">{headline}</p>
     <a href="{url}"
        style="display:block;text-align:center;background:#0071e3;color:#ffffff;
               text-decoration:none;font-size:17px;font-weight:600;
               padding:16px 24px;border-radius:10px;">Read the story &rarr;</a>
-    <p style="margin:20px 0 0;font-size:13px;color:#86868b;">{meta}</p>
+    <p style="margin:20px 0 0;font-size:13px;color:#86868b;">{meta}</p>""".format(
+            headline=escape(headline), url=escape(url), meta=escape(meta))
+    else:
+        lead = ('\n    <p style="margin:0;font-size:17px;line-height:1.45;'
+                'color:#3a3a3c;">{}</p>'.format(escape(headline)))
+
+    msg.add_alternative(
+        """\
+<html><body style="margin:0;padding:24px;background:#f5f5f7;
+ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;
+              padding:28px;">{lead}{realestate}
   </div>
 </body></html>
-""".format(headline=escape(subject), url=escape(url), meta=escape(meta)),
+""".format(lead=lead, realestate=realestate_html(re_deals)),
         subtype="html",
     )
     return msg
@@ -212,9 +351,16 @@ def send_email(msg, sender, password):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--deal", default=DEAL_PATH)
+    ap.add_argument("--realestate", default=RE_DEALS_PATH)
     ap.add_argument("--dry-run", action="store_true",
                     help="Render and validate, but do not send or record.")
     args = ap.parse_args()
+
+    state = load_state()
+
+    # ---- section 1: the company acquisition -----------------------------
+    deal = None
+    company_note = None
 
     if not os.path.exists(args.deal):
         print("ERROR: {} does not exist - the selection step did not run."
@@ -222,37 +368,57 @@ def main():
         return 1
 
     raw = read_json(args.deal)
-
     try:
         deal = validate(raw)
     except Skipped as exc:
-        print("Not sending: {}".format(exc))
-        return 0
+        company_note = "No acquisition sent: {}".format(exc)
+        print(company_note)
+        deal = None
     except Rejected as exc:
         print("ERROR: refusing to send - {}".format(exc), file=sys.stderr)
         print("Deal payload was: {}".format(raw), file=sys.stderr)
         return 1
 
-    if deal is None:
-        print("No qualifying deal in the 7-day window: {}".format(
-            raw.get("reason", "no reason given")))
-        print("Nothing sent, by design.")
+    if deal is None and company_note is None:
+        company_note = "No qualifying acquisition in the 7-day window: {}".format(
+            raw.get("reason", "no reason given"))
+        print(company_note)
+
+    key = None
+    if deal is not None:
+        key = make_deal_key(deal["target_name"], deal["acquirer_name"])
+        if key in sent_keys(state):
+            print("Already sent this acquisition ({}).".format(key))
+            deal, key = None, None
+            company_note = "No new acquisition today."
+
+    # ---- section 2: property deals --------------------------------------
+    re_deals = load_realestate(args.realestate, re_sent_keys(state))
+    print("Property deals to include: {}".format(len(re_deals)))
+
+    if deal is None and not re_deals:
+        print("Nothing to send today. Exiting cleanly.")
         return 0
 
-    state = load_state()
-    key = make_deal_key(deal["target_name"], deal["acquirer_name"])
-    if key in sent_keys(state):
-        print("Already sent this deal ({}). Nothing to do.".format(key))
-        return 0
-
-    subject = render(deal)
-    article_url = resolve_url(deal["article_url"])
+    # ---- compose ---------------------------------------------------------
+    if deal is not None:
+        subject = headline = render(deal)
+        article_url = resolve_url(deal["article_url"])
+    else:
+        # The property section carries the email on its own.
+        where = ", ".join(d["city"] for d in re_deals)
+        subject = "No major acquisition yesterday. {} property deal{} inside: {}.".format(
+            len(re_deals), "" if len(re_deals) == 1 else "s", where)
+        headline = company_note or "No qualifying acquisition yesterday."
+        article_url = None
 
     print("Subject: {}".format(subject))
-    print("Link:    {}".format(article_url))
-    print("Source:  {}".format(deal["article_source"] or "unknown"))
-    print("Key:     {}".format(key))
-    print("Fallback used: {}".format(deal["used_fallback"]))
+    if article_url:
+        print("Link:    {}".format(article_url))
+    for d in re_deals:
+        amount, unit = format_amount(d["amount_usd_millions"])
+        print("   RE:   ${} {} - {} ({}, {})".format(
+            amount, unit, d["property_name"], d["city"], d["property_type"]))
 
     if args.dry_run:
         print("\n--dry-run: not sending, not recording.")
@@ -270,7 +436,8 @@ def main():
               file=sys.stderr)
         return 1
 
-    msg = build_message(subject, article_url, deal, sender, recipient)
+    msg = build_message(subject, headline, article_url, deal, re_deals,
+                        sender, recipient)
 
     try:
         send_email(msg, sender, password)
@@ -284,8 +451,9 @@ def main():
 
     print("Sent to {}".format(recipient))
 
-    state["sent"].append(
-        {
+    # ---- record ----------------------------------------------------------
+    if deal is not None and key:
+        state["sent"].append({
             "sent_at_et": now_et().isoformat(timespec="seconds"),
             "deal_key": key,
             "target_name": deal["target_name"],
@@ -295,8 +463,11 @@ def main():
             "article_url": article_url,
             "used_fallback": deal["used_fallback"],
             "message": subject,
-        }
-    )
+        })
+
+    if re_deals:
+        state.setdefault("re_sent", []).extend(d["key"] for d in re_deals)
+
     save_state(state)
     print("Recorded in state/sent.json")
     return 0

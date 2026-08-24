@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Decide whether this is the 18:00 ET run
+      - name: Decide whether to run
         id: gate
         run: |
           if [ "${{ github.event_name }}" != "schedule" ]; then
@@ -37,30 +37,33 @@ jobs:
             exit 0
           fi
 
-          # Two crons are registered because GitHub only speaks UTC and New
-          # York moves twice a year. Exactly one is correct on any given day.
+          # Two crons are registered because GitHub speaks only UTC while New
+          # York moves twice a year. Rather than decide which cron "should" own
+          # today, both are allowed to try: the first to arrive at or after
+          # 18:00 ET wins, and the other finds today's date already recorded
+          # and stands down.
           #
-          # This deliberately does NOT check the current clock time. GitHub
-          # routinely runs scheduled jobs late, and a delay past the hour would
-          # make an hour-equals-18 test skip the day entirely. Which cron fired
-          # is a fact that a delay cannot change.
-          OFFSET=$(TZ=America/New_York date +%z)
-          SCHEDULE="${{ github.event.schedule }}"
+          # The previous version compared github.event.schedule against the
+          # cron expected for the current DST offset. That fails CLOSED and
+          # SILENTLY if the expression is ever empty - a green run with every
+          # step skipped and no email - which is what took the job down.
+          # This version has no such branch: the default is to run.
+          TODAY=$(TZ=America/New_York date +%F)
+          HOUR=$((10#$(TZ=America/New_York date +%H)))
+          LAST=$(tr -d '[:space:]' < state/last_run.txt 2>/dev/null || true)
 
-          case "$OFFSET" in
-            -0400) WANTED="0 22 * * *" ;;   # EDT: 22:00 UTC is 18:00 ET
-            -0500) WANTED="0 23 * * *" ;;   # EST: 23:00 UTC is 18:00 ET
-            *)     echo "Unexpected New York offset $OFFSET - proceeding anyway."
-                   echo "should_run=true" >> "$GITHUB_OUTPUT"; exit 0 ;;
-          esac
+          echo "New York now : $TODAY at ${HOUR}:00"
+          echo "Last run     : ${LAST:-never}"
 
-          if [ "$SCHEDULE" = "$WANTED" ]; then
-            echo "New York is at UTC$OFFSET, so '$SCHEDULE' is today's 18:00 ET run."
-            echo "Actual start: $(TZ=America/New_York date '+%H:%M %Z') (delay is fine)."
-            echo "should_run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "New York is at UTC$OFFSET, so '$WANTED' is today's run, not '$SCHEDULE'."
+          if [ "$LAST" = "$TODAY" ]; then
+            echo "-> Already ran today. Standing down."
             echo "should_run=false" >> "$GITHUB_OUTPUT"
+          elif [ "$HOUR" -lt 18 ]; then
+            echo "-> Before 18:00 ET. The later cron takes today."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "-> Proceeding."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: actions/setup-python@v5
@@ -117,6 +120,22 @@ jobs:
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
         run: python3 scripts/select_deal.py
 
+      # The property section is a bonus. continue-on-error keeps a bad day
+      # for real-estate feeds from blocking the acquisition email, which is
+      # the part that must not fail.
+      - name: Fetch property candidates
+        if: steps.gate.outputs.should_run == 'true'
+        continue-on-error: true
+        run: python3 scripts/fetch_candidates.py --mode realestate
+
+      - name: Select property deals
+        if: steps.gate.outputs.should_run == 'true'
+        continue-on-error: true
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        run: python3 scripts/select_deal.py --mode realestate
+
       - name: Send the notification
         if: steps.gate.outputs.should_run == 'true'
         env:
@@ -130,16 +149,20 @@ jobs:
             python3 scripts/send_notification.py
           fi
 
-      - name: Record what was sent
+      - name: Record the run
         if: steps.gate.outputs.should_run == 'true' && inputs.dry_run != true
         run: |
+          # Written even on a no-deal day: it is both the "already ran today"
+          # marker and a visible heartbeat in the commit log.
+          TZ=America/New_York date +%F > state/last_run.txt
           git config user.name "deal-bot"
           git config user.email "deal-bot@users.noreply.github.com"
-          git add state/sent.json
+          git add state/last_run.txt state/sent.json
           if git diff --staged --quiet; then
-            echo "No state change to commit."
+            echo "Nothing to record."
           else
-            git commit -m "Sent daily deal notification [skip ci]"
+            git commit -m "Daily run $(TZ=America/New_York date +%F) [skip ci]"
+            git pull --rebase --autostash origin main || true
             git push
           fi
 

@@ -16,6 +16,10 @@ STATE_PATH = os.path.join(REPO_ROOT, "state", "sent.json")
 CANDIDATES_PATH = os.path.join(WORK_DIR, "candidates.json")
 DEAL_PATH = os.path.join(WORK_DIR, "deal.json")
 
+# Second section of the email: US/Canada property transactions.
+RE_CANDIDATES_PATH = os.path.join(WORK_DIR, "re_candidates.json")
+RE_DEALS_PATH = os.path.join(WORK_DIR, "realestate.json")
+
 # How far back the fallback search reaches when yesterday has no usable deal.
 LOOKBACK_DAYS = 7
 
@@ -133,6 +137,15 @@ def deal_key(target, acquirer):
     return "{}|{}".format(company_key(target), company_key(acquirer))
 
 
+def property_key(name, city):
+    """Stable identity for a property transaction.
+
+    Keyed on the property plus its city because building names repeat across
+    markets - plenty of cities have a "One Marina Park" or a "Centre Square".
+    """
+    return "{}|{}".format(normalize(name), normalize(city))
+
+
 # --------------------------------------------------------------------------
 # Paywalls
 # --------------------------------------------------------------------------
@@ -151,6 +164,9 @@ PAYWALLED_SOURCES = {
     # The UK Times specifically. A bare "the times" also matches The Times of
     # India, The Irish Times, and the Seattle Times, none of which belong here.
     "thetimes", "times of london", "sunday times",
+    # Real-estate trade press that hard-paywalls.
+    "costar", "bizjournals", "business journals", "real estate alert",
+    "green street", "trepp", "the deal",
 }
 
 # Reliably free, reputable, and widely read. Used to rank the good options.
@@ -161,6 +177,11 @@ FREE_SOURCES = {
     "fortune", "businesswire", "business wire", "prnewswire", "pr newswire",
     "globenewswire", "zdnet", "ars technica", "engadget", "quartz",
     "fierce", "endpoints", "benzinga", "thestreet", "aljazeera", "dw",
+    # Free real-estate trade press, used for the property section.
+    "renx", "therealdeal", "the real deal", "bisnow", "globest", "rejournals",
+    "connect cre", "connectcre", "multi housing news", "multifamily dive",
+    "commercial property executive", "rebusinessonline", "storeys",
+    "mercury news", "nbc", "abc", "cbs", "patch", "spectrum news",
 }
 
 
@@ -211,6 +232,7 @@ def load_state():
         except json.JSONDecodeError:
             return {"sent": []}
     state.setdefault("sent", [])
+    state.setdefault("re_sent", [])
     return state
 
 
@@ -218,6 +240,7 @@ def save_state(state):
     os.makedirs(os.path.dirname(STATE_PATH), exist_ok=True)
     # Keep the file from growing forever; 400 entries is well over a year.
     state["sent"] = state["sent"][-400:]
+    state["re_sent"] = state.get("re_sent", [])[-600:]
     with open(STATE_PATH, "w", encoding="utf-8") as fh:
         json.dump(state, fh, indent=2, ensure_ascii=False)
         fh.write("\n")
@@ -225,6 +248,11 @@ def save_state(state):
 
 def sent_keys(state):
     return {entry["deal_key"] for entry in state.get("sent", []) if entry.get("deal_key")}
+
+
+def re_sent_keys(state):
+    """Property deals already shown, so each day surfaces new ones."""
+    return {k for k in state.get("re_sent", []) if k}
 
 
 def read_json(path):

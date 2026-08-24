@@ -12,6 +12,10 @@ Figures at or above a billion read as billions; smaller deals read as millions.
 The linked article is always the most widely read coverage that isn't behind a
 paywall.
 
+The email has two parts: the acquisition above (which is also the subject line)
+and the biggest US/Canada property deals below, each with a line on why it is
+worth knowing.
+
 Delivery is a plain email to your own Gmail, sent over SMTP with an App
 Password — no third-party service, nothing to install, no monthly cost. **The
 notification text is the email's subject line**, because the subject is what
@@ -33,9 +37,13 @@ GitHub Actions cron (22:00 + 23:00 UTC, gated to 18:00 ET)
   │       → picks the largest valid deal, labels industries, picks the article
   │       → work/deal.json
   │
-  ├─ 3. scripts/send_notification.py     validates, dedupes, emails via Gmail SMTP
+  ├─ 3. the same two steps in --mode realestate
+  │       → US/Canada property transactions, top 3, deduped against history
+  │       → work/realestate.json          (best-effort: never blocks the email)
   │
-  └─ 4. commits state/sent.json back to the repo
+  ├─ 4. scripts/send_notification.py     validates, dedupes, emails via Gmail SMTP
+  │
+  └─ 5. commits state/ back to the repo (also the daily heartbeat)
 ```
 
 **Why the split.** Python does the numeric work, because regex parses
@@ -205,6 +213,21 @@ Scheduled runs start automatically. GitHub disables cron on repos with no
 activity for 60 days, but this one commits `state/sent.json` on every send, so
 it keeps itself alive.
 
+## The property section
+
+Three US/Canada property transactions per email, ranked by price, chosen for
+variety of type and city rather than three of the same thing. Each carries a
+`why_notable` line explaining the structure or the signal — sale-leaseback,
+price per square foot, distressed sale — because the point is learning what
+kinds of deals get made, not just the numbers.
+
+Property deals are deduped separately in `state.re_sent`, so you see new ones
+each day rather than the same tower all week. The window is the same 7 days as
+the acquisition section, because there is not always a big trade yesterday.
+
+If the property feeds or the second Gemini call fail, those steps are marked
+`continue-on-error` and the email goes out with the acquisition alone.
+
 ## Behavior
 
 **Empty days.** Most days with no deal are weekends, and roughly two-thirds of
@@ -243,13 +266,15 @@ and prints the notification without sending it or recording anything.
 |---|---|
 | `.github/workflows/daily-deal.yml` | Schedule, gating, and the four steps |
 | `scripts/fetch_candidates.py` | RSS → filtered, priced candidate list |
-| `scripts/select_deal.py` | Gemini call that picks and labels the winner |
+| `scripts/select_deal.py` | Gemini call that picks and labels the winner(s) |
+| `prompts/select_realestate.md` | Rules for the property section |
 | `scripts/setup_local.sh` | Option A: stores credentials, schedules launchd |
 | `scripts/run_daily.sh` | Option A: the daily run (also handy for testing) |
 | `scripts/send_notification.py` | Validation gate, template, Gmail SMTP, state |
 | `scripts/common.py` | Time windows, money parsing, dedup keys |
 | `prompts/select_deal.md` | The selection spec the LLM step follows |
 | `state/sent.json` | Every deal already sent — the dedup memory |
+| `state/last_run.txt` | Date of the last run — the "already ran today" marker |
 | `work/` | Per-run scratch, gitignored, uploaded as a run artifact |
 
 ## Known rough edges
