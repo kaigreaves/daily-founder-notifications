@@ -19,6 +19,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -36,9 +37,14 @@ from common import (
 
 API_ROOT = "https://generativelanguage.googleapis.com/v1beta"
 
-# `or` rather than a dict default: CI passes an empty string when the optional
-# repo variable is unset, and an empty model name 404s confusingly.
-DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "").strip() or "gemini-2.5-flash"
+# Empty means "ask the API what exists and rank it". Hardcoding a default just
+# buys a wasted 404 every run once Google retires that name - which is exactly
+# what happened to gemini-2.5-flash.
+DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "").strip()
+
+# Codes worth retrying: transient overload and rate limiting, not bad requests.
+RETRYABLE = {429, 500, 502, 503, 504}
+BACKOFF_SECONDS = (5, 20)
 
 # Trim per-candidate text so a big day cannot blow the free-tier token budget.
 MAX_CANDIDATES = 90
@@ -198,8 +204,13 @@ def available_models(key):
 _MODEL_EXCLUDE = ("preview", "exp", "image", "tts", "audio", "vision", "embedding")
 
 
-def pick_model(models):
-    """Best general-purpose flash model available, newest version first."""
+def rank_models(models):
+    """Usable flash models, newest first.
+
+    Returns a list rather than one pick so an overloaded model can be stepped
+    past. The newest model is also the most in demand, so the second choice is
+    often the one that actually answers.
+    """
     def version(name):
         m = re.search(r"gemini-(\d+)\.(\d+)", name)
         return (int(m.group(1)), int(m.group(2))) if m else (0, 0)
@@ -210,11 +221,14 @@ def pick_model(models):
     ]
     if not usable:
         usable = [n for n in models if not any(bad in n for bad in _MODEL_EXCLUDE)]
-    if not usable:
-        return None
 
     usable.sort(key=lambda n: (version(n), "lite" not in n), reverse=True)
-    return usable[0]
+    return usable
+
+
+def pick_model(models):
+    ranked = rank_models(models)
+    return ranked[0] if ranked else None
 
 
 def list_models(key):
@@ -222,7 +236,8 @@ def list_models(key):
     models = available_models(key)
     for name in models:
         print("  {}".format(name))
-    print("\nAuto-selection would choose: {}".format(pick_model(models) or "(none)"))
+    print("\nWould try in this order: {}".format(
+        ", ".join(rank_models(models)) or "(nothing suitable)"))
     return 0
 
 
@@ -389,46 +404,81 @@ def main():
             if exc.code != 400 or not schema_on[0]:
                 raise
             body = exc.read().decode("utf-8", "replace")
-            print("\nHTTP 400 with response_schema attached:\n{}".format(body[:800]))
-            print("Retrying in plain JSON mode with the schema in the prompt.")
+            print("  HTTP 400 with response_schema attached: {}".format(body[:400]))
+            print("  Retrying in plain JSON mode with the schema in the prompt.")
             schema_on[0] = False
             return call(model)
 
+    # Build the list of models to try. An explicit GEMINI_MODEL goes first;
+    # everything the key can actually reach follows, newest first.
     try:
-        try:
-            response = call_with_recovery(args.model)
-        except urllib.error.HTTPError as exc:
-            if exc.code != 404:
-                raise
-            # Google retires and renames models regularly. Rather than fail on
-            # a stale hardcoded name, ask the key what it can actually reach.
-            print("\n{} returned 404. Discovering an available model..."
-                  .format(args.model))
-            models = available_models(key)
-            fallback = pick_model(models)
-            if not fallback:
-                print("ERROR: no usable model found. Your key can reach: {}"
-                      .format(", ".join(models) or "(nothing)"), file=sys.stderr)
-                return 1
-            print("Retrying with {}".format(fallback))
-            response = call_with_recovery(fallback)
-            print("\nNOTE: {} worked but {} did not. To skip this lookup in "
-                  "future, set a repo variable GEMINI_MODEL to {}."
-                  .format(fallback, args.model, fallback))
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", "replace")
-        print("ERROR: Gemini returned HTTP {}\n{}".format(exc.code, body),
-              file=sys.stderr)
-        if exc.code in (401, 403):
-            print("\nThat usually means GEMINI_API_KEY is missing, mistyped, or "
-                  "restricted. Recreate it at https://aistudio.google.com/apikey",
-                  file=sys.stderr)
-        elif exc.code == 429:
-            print("\nFree-tier rate limit hit. Check quota at "
-                  "https://aistudio.google.com/rate-limit", file=sys.stderr)
+        discovered = rank_models(available_models(key))
+    except (urllib.error.HTTPError, urllib.error.URLError, OSError) as exc:
+        print("WARNING: could not list models ({}). Falling back to defaults."
+              .format(exc), file=sys.stderr)
+        discovered = ["gemini-3.5-flash", "gemini-2.5-flash"]
+
+    attempts = ([args.model] if args.model else []) + [
+        m for m in discovered if m != args.model]
+    if not attempts:
+        print("ERROR: no usable Gemini model found for this key.", file=sys.stderr)
         return 1
-    except (urllib.error.URLError, OSError) as exc:
-        print("ERROR: could not reach Gemini: {}".format(exc), file=sys.stderr)
+
+    print("Model order:  {}".format(", ".join(attempts)))
+
+    response = None
+    last_error = None
+
+    for model in attempts:
+        for attempt in range(len(BACKOFF_SECONDS) + 1):
+            try:
+                print("Calling {}{}...".format(
+                    model, "" if attempt == 0 else " (retry {})".format(attempt)))
+                response = call_with_recovery(model)
+                break
+            except urllib.error.HTTPError as exc:
+                last_error = exc
+                body = exc.read().decode("utf-8", "replace")[:300]
+                if exc.code == 404:
+                    print("  404 - model not available, moving to the next.")
+                    break
+                if exc.code in RETRYABLE:
+                    # 503 means the model is momentarily swamped, not broken.
+                    # Wait, then try again; then step to a less popular model.
+                    if attempt < len(BACKOFF_SECONDS):
+                        wait = BACKOFF_SECONDS[attempt]
+                        print("  HTTP {} ({}). Waiting {}s.".format(
+                            exc.code, exc.reason, wait))
+                        time.sleep(wait)
+                        continue
+                    print("  HTTP {} after {} attempts, moving to the next model."
+                          .format(exc.code, attempt + 1))
+                    break
+                print("ERROR: Gemini returned HTTP {}\n{}".format(exc.code, body),
+                      file=sys.stderr)
+                if exc.code in (401, 403):
+                    print("\nThat usually means GEMINI_API_KEY is missing, "
+                          "mistyped, or restricted. Recreate it at "
+                          "https://aistudio.google.com/apikey", file=sys.stderr)
+                return 1
+            except (urllib.error.URLError, OSError) as exc:
+                last_error = exc
+                if attempt < len(BACKOFF_SECONDS):
+                    wait = BACKOFF_SECONDS[attempt]
+                    print("  Network error ({}). Waiting {}s.".format(exc, wait))
+                    time.sleep(wait)
+                    continue
+                break
+        if response is not None:
+            if model != args.model:
+                print("\nNOTE: {} answered. To skip the lookup, set a repo "
+                      "variable GEMINI_MODEL to {}.".format(model, model))
+            break
+
+    if response is None:
+        print("ERROR: every model failed. Last error: {}".format(last_error),
+              file=sys.stderr)
+        print("Tried: {}".format(", ".join(attempts)), file=sys.stderr)
         return 1
 
     try:

@@ -123,9 +123,13 @@ jobs:
         if: steps.gate.outputs.should_run == 'true'
         run: python3 scripts/fetch_candidates.py
 
+      # continue-on-error so a Gemini outage on the acquisition call does not
+      # also cost the property section and the email. The Summary step below
+      # still fails the job, so the run shows red and GitHub notifies.
       - name: Select the winning deal
         id: select
         if: steps.gate.outputs.should_run == 'true'
+        continue-on-error: true
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
@@ -201,13 +205,23 @@ jobs:
             echo "| Send email | ${{ steps.send.outcome || 'skipped' }} |"
             echo "| Record run | ${{ steps.record.outcome || 'skipped' }} |"
             echo ""
-            if [ "${{ job.status }}" != "success" ]; then
+            if [ "${{ steps.select.outcome }}" = "failure" ] \
+              || [ "${{ steps.send.outcome }}" = "failure" ] \
+              || [ "${{ job.status }}" != "success" ]; then
               echo "### Something failed"
               echo ""
               echo "The first step above showing \`failure\` is the one to open."
               echo "Its log ends with a line starting \`ERROR:\` explaining why."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+          # continue-on-error steps do not fail the job by themselves, so the
+          # run would otherwise show green while sending half an email.
+          if [ "${{ steps.select.outcome }}" = "failure" ] \
+            || [ "${{ steps.send.outcome }}" = "failure" ]; then
+            echo "Marking the run failed: a required step did not succeed."
+            exit 1
+          fi
 
       - name: Upload run details for debugging
         if: always() && steps.gate.outputs.should_run == 'true'

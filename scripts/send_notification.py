@@ -359,12 +359,22 @@ def main():
     state = load_state()
 
     # ---- section 1: the company acquisition -----------------------------
+    # A missing file means the acquisition selector failed. That is worth
+    # knowing, but it is not a reason to withhold the property section too, so
+    # carry on with an empty candidate list. The workflow still marks the run
+    # failed via its summary step.
+    raw = {}
     if not os.path.exists(args.deal):
-        print("ERROR: {} does not exist - the selection step did not run."
+        print("WARNING: {} does not exist - the acquisition selector did not "
+              "produce a result. Continuing with the property section only."
               .format(args.deal), file=sys.stderr)
-        return 1
-
-    raw = read_json(args.deal)
+    else:
+        try:
+            raw = read_json(args.deal)
+        except (ValueError, OSError) as exc:
+            print("WARNING: could not read {}: {}".format(args.deal, exc),
+                  file=sys.stderr)
+            raw = {}
 
     # The selector returns a ranked list. Older files held a single deal at the
     # top level; accept both so a stale work/ directory still works.
