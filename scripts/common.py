@@ -181,6 +181,7 @@ FREE_SOURCES = {
     "renx", "therealdeal", "the real deal", "bisnow", "globest", "rejournals",
     "connect cre", "connectcre", "multi housing news", "multifamily dive",
     "commercial property executive", "rebusinessonline", "storeys",
+    "commercial observer", "commercialobserver",
     "mercury news", "nbc", "abc", "cbs", "patch", "spectrum news",
 }
 

@@ -62,6 +62,10 @@ REQUIRED_FIELDS = (
 
 ACCEPTED_CONFIDENCE = {"high", "medium"}
 
+# Consecutive days with nothing sent before the system reports itself. Three
+# is past a normal quiet weekend but well short of the week this went unnoticed.
+QUIET_ALERT_AFTER = 3
+
 
 class Rejected(Exception):
     """Malformed output. Something is broken - fail loudly."""
@@ -341,6 +345,45 @@ def build_message(subject, headline, url, deal, re_deals, sender, recipient):
     return msg
 
 
+def send_watchdog(quiet_days, company_note, notes):
+    """Tell the reader the job is alive but has found nothing for a while."""
+    sender = os.environ.get("GMAIL_ADDRESS", "").strip()
+    password = re.sub(r"\s+", "", os.environ.get("GMAIL_APP_PASSWORD", ""))
+    recipient = os.environ.get("NOTIFY_TO", "").strip() or sender
+    if not sender or not password:
+        print("Cannot send watchdog alert: credentials not set.", file=sys.stderr)
+        return
+
+    body = [
+        "The daily deal job has run for {} days in a row without finding "
+        "anything to send.".format(quiet_days),
+        "",
+        "It is running fine - this is the job reporting on itself, not a crash.",
+        "Either the news genuinely is quiet, or a news feed has gone stale and "
+        "is no longer returning results.",
+        "",
+        "Most recent reason:",
+        "  {}".format(company_note or "no acquisition selected"),
+    ]
+    body += ["  {}".format(n) for n in notes[:5]]
+    body += [
+        "",
+        "Worth a look at the Actions tab if this keeps up.",
+    ]
+
+    msg = EmailMessage()
+    msg["Subject"] = "Daily Deals: nothing found for {} days".format(quiet_days)
+    msg["From"] = formataddr((FROM_NAME, sender))
+    msg["To"] = recipient
+    msg.set_content("\n".join(body) + "\n")
+
+    try:
+        send_email(msg, sender, password)
+        print("Watchdog alert sent to {}".format(recipient))
+    except (smtplib.SMTPException, ssl.SSLError, OSError) as exc:
+        print("Could not send watchdog alert: {}".format(exc), file=sys.stderr)
+
+
 def send_email(msg, sender, password):
     context = ssl.create_default_context()
     with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context, timeout=30) as server:
@@ -429,8 +472,22 @@ def main():
     print("Property deals to include: {}".format(len(re_deals)))
 
     if deal is None and not re_deals:
-        print("Nothing to send today. Exiting cleanly.")
+        # Silence is how this system has failed before: green runs, no email,
+        # nobody the wiser. Count quiet days and speak up rather than let a
+        # slow decay in the feeds look identical to a slow news week.
+        quiet = int(state.get("quiet_days", 0)) + 1
+        state["quiet_days"] = quiet
+        print("Nothing to send today. Quiet days in a row: {}".format(quiet))
+
+        if quiet >= QUIET_ALERT_AFTER and (quiet - QUIET_ALERT_AFTER) % 7 == 0:
+            print("Sending a watchdog alert.")
+            if not args.dry_run:
+                send_watchdog(quiet, company_note, notes)
+        if not args.dry_run:
+            save_state(state)
         return 0
+
+    state["quiet_days"] = 0
 
     # ---- compose ---------------------------------------------------------
     if deal is not None:

@@ -61,6 +61,8 @@ COMPANY_QUERIES = [
     '"definitive agreement" acquire when:{days}d',
 ]
 
+# GlobeNewswire has timed out on every check; left in because it costs only a
+# tolerated 15s timeout and may come back.
 COMPANY_FEEDS = [
     "https://www.prnewswire.com/rss/financial-services-latest-news/acquisitions-mergers-and-takeovers-list.rss",
     "https://www.globenewswire.com/RssFeed/subjectcode/1-Mergers%20And%20Acquisitions/feedTitle/GlobeNewswire%20-%20Mergers%20and%20Acquisitions",
@@ -100,10 +102,14 @@ REALESTATE_QUERIES = [
     '"real estate" "sale price" million when:{days}d',
 ]
 
+# Checked 2026-08-23. RENX now returns 410 Gone on every feed path and the
+# bare therealdeal.com/feed/ serves an empty document; both replaced. Google
+# News still carries the bulk of the volume, so these are a supplement.
 REALESTATE_FEEDS = [
-    "https://therealdeal.com/feed/",
+    "https://therealdeal.com/national/feed/",
     "https://commercialobserver.com/feed/",
-    "https://renx.ca/feed",
+    "https://www.bisnow.com/rss",
+    "https://storeys.com/feed",
 ]
 
 REALESTATE_INCLUDE = re.compile(

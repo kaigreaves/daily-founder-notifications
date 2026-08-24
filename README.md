@@ -289,6 +289,31 @@ and prints the notification without sending it or recording anything.
 | `state/last_run.txt` | Date of the last run — the "already ran today" marker |
 | `work/` | Per-run scratch, gitignored, uploaded as a run artifact |
 
+## Watchdog
+
+Three consecutive days with nothing sent triggers a self-report email, then one
+a week after that. Silence has twice been this system's failure mode — a green
+run that quietly sends nothing looks exactly like a slow news week. The
+watchdog makes the two distinguishable without anyone checking.
+
+`state.quiet_days` holds the counter; a successful send resets it.
+
+## Feed health
+
+Checked 2026-08-23. Google News RSS supplies ~95% of raw items; the direct
+feeds are a supplement, and any of them failing is tolerated and logged.
+
+| Feed | Status |
+|---|---|
+| Google News RSS (18 queries) | working — the backbone |
+| PR Newswire M&A | working |
+| GlobeNewswire M&A | times out; left in, costs one 15s timeout |
+| Commercial Observer | working |
+| The Real Deal | fixed — bare `/feed/` is empty, `/national/feed/` works |
+| Bisnow | working |
+| STOREYS (Canada) | working |
+| RENX | **removed** — returns 410 Gone on every path |
+
 ## Known rough edges
 
 - **Tap-through links are often `news.google.com`** URLs. They open the article
