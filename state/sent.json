@@ -54,6 +54,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPREZ0cm1uVlJNNVZsMmNPUldwT1lQaVI2dUNjV0FGbG51d0FEV3o0dnhGMjh0NjNVYWRnUHl4ZTYtYmUzcm5RMVpPQWlHdHQtUThtWjBKRjA1XzQxcTktdG1kUndiU0xmd1JBWi1vMnlIMnNjeWxLRURnMndaajhka1Rjd2l5d9IBhgFBVV95cUxPREZ0cm1uVlJNNVZsMmNPUldwT1lQaVI2dUNjV0FGbG51d0FEV3o0dnhGMjh0NjNVYWRnUHl4ZTYtYmUzcm5RMVpPQWlHdHQtUThtWjBKRjA1XzQxcTktdG1kUndiU0xmd1JBWi1vMnlIMnNjeWxLRURnMndaajhka1Rjd2l5dw?oc=5",
       "used_fallback": false,
       "message": "Accounting company, CBIZ, was acquired by Accounting company, Grant Thornton, for $5 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-09-03T19:51:53-04:00",
+      "deal_key": "delivery hero|uber",
+      "target_name": "Delivery Hero",
+      "acquirer_name": "Uber",
+      "amount_usd_millions": 15000.0,
+      "announced_date": "2026-09-02",
+      "article_url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOZlQ5b01VS3NhX19aSVJSS1BIU0RDSTRTb1psdzNfTHRxd09STlpqc2ZRQ3ZCWXprOTloN0FUcnU4bXlZT2Y0OUU0S19VaEx5M29kSEEzRlFZS01qVHNZaVI0N3lNa3JUMWtYOW5YeFQ5SzdQQkl6SGJvUWdkRmpnNUwwVnRuSHhaRzlZ?oc=5",
+      "used_fallback": false,
+      "message": "Food-delivery company, Delivery Hero, was acquired by Mobility company, Uber, for $15 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -83,7 +94,10 @@
     "pair of toronto area industrial buildings|toronto",
     "downtown san jose apartment complex|san jose",
     "200 acre ai infrastructure land|undisclosed",
-    "chelsea hotel|new york"
+    "chelsea hotel|new york",
+    "park303 final two buildings|glendale",
+    "chicago high rise residential tower|chicago",
+    "south tampa apartment complex|tampa"
   ],
   "skipped": [],
   "quiet_days": 0
