@@ -65,6 +65,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOZlQ5b01VS3NhX19aSVJSS1BIU0RDSTRTb1psdzNfTHRxd09STlpqc2ZRQ3ZCWXprOTloN0FUcnU4bXlZT2Y0OUU0S19VaEx5M29kSEEzRlFZS01qVHNZaVI0N3lNa3JUMWtYOW5YeFQ5SzdQQkl6SGJvUWdkRmpnNUwwVnRuSHhaRzlZ?oc=5",
       "used_fallback": false,
       "message": "Food-delivery company, Delivery Hero, was acquired by Mobility company, Uber, for $15 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-09-15T20:02:07-04:00",
+      "deal_key": "beazley|zurich insurance",
+      "target_name": "Beazley",
+      "acquirer_name": "Zurich Insurance",
+      "amount_usd_millions": 10900.0,
+      "announced_date": "2026-09-14",
+      "article_url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxOZllveUpZZkFORXVxcDZyRHZkLXg4dV9hZE04eXlOdk1sTVlVV2tNemxLNFhVRlpoNXJHd2hRejVROGwxSWdMYXpGWlJLR0N5a2poR3l1bXpETXhqNGRhYmFCdTVLaHVZMmxCZVVyOFB2NnlxVURINUpNLV9NVGNmMTNteDhNMlYtdHN3aUlOQmxEYThjOTBqaS1vcDdIMnBFei1xWXpoUEpDM2lPd1E?oc=5",
+      "used_fallback": false,
+      "message": "Insurance company, Beazley, was acquired by Insurance company, Zurich Insurance, for $10.9 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -121,8 +132,9 @@
     "williamsburg apartment complex|new york",
     "309 east 94th street|new york",
     "north miami beach apartments|north miami beach",
-    "801 bartholdi street|new york"
+    "801 bartholdi street|new york",
+    "sammamish apartment complex|sammamish"
   ],
   "skipped": [],
-  "quiet_days": 1
+  "quiet_days": 0
 }
