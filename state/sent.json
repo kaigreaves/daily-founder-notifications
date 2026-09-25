@@ -87,6 +87,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxQbmpHek45TXFyOGNHNWxjeWhyRURFSzBwUEJqRThOS3lQY21Wcnp2enQ2Q1RzSGtJUFVCUFpPNFBlWHppZmZkUGNxS3AtemVsRTAzR0REUFRSYUthSmJuY0IxcHR1SFViVks3QW9ENFhQV19uaWg2ZExqZnVhcTdqQ1JnX2c1d3FVQjQtQk1GX3hDRGlJV1FiQVZmdHdUazV1SV9KamwtSGxhc3pxamhIaU9nb0FLY282djNSVTlMUlA1ejJfZ0hyNkpsdnU?oc=5",
       "used_fallback": false,
       "message": "Food company, Tate & Lyle, was acquired by Food company, Ingredion, for $3.6 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-09-24T20:28:43-04:00",
+      "deal_key": "caesars|fertitta",
+      "target_name": "Caesars",
+      "acquirer_name": "Fertitta",
+      "amount_usd_millions": 17600.0,
+      "announced_date": "2026-09-23",
+      "article_url": "https://news.google.com/rss/articles/CBMirAFBVV95cUxPQ2tFSzlQNWx1MWxUMElBaFRQWG1wTDQ0cGI3TkhMRWxCRFNVd3VpbU42c0NuaUhwaWdDamt6eE9RWk4zMHhhZUJtTXV1NmdTM0pCaE1UeWJCWnNLUzhZeWRiQWxOdXl6MXZPSlZqd0hzZHlIMU9wa2dyN0JQV2JsTG0weTFXZXZpeFh3V0NlMWRjc08yTzJXQ0JXVHcydTdtdEJGTWxDQW9MVUMt?oc=5",
+      "used_fallback": false,
+      "message": "Gaming company, Caesars, was acquired by Investment company, Fertitta, for $17.6 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -161,7 +172,10 @@
     "24 41 31st street|new york",
     "boulder creek apartments|seattle",
     "zona rosa shopping center|kansas city",
-    "midtown manhattan tower|new york"
+    "midtown manhattan tower|new york",
+    "randhurst village|mount prospect",
+    "110 tower|fort lauderdale",
+    "infill nashville portfolio|nashville"
   ],
   "skipped": [],
   "quiet_days": 0
