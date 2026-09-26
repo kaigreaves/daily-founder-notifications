@@ -98,6 +98,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMirAFBVV95cUxPQ2tFSzlQNWx1MWxUMElBaFRQWG1wTDQ0cGI3TkhMRWxCRFNVd3VpbU42c0NuaUhwaWdDamt6eE9RWk4zMHhhZUJtTXV1NmdTM0pCaE1UeWJCWnNLUzhZeWRiQWxOdXl6MXZPSlZqd0hzZHlIMU9wa2dyN0JQV2JsTG0weTFXZXZpeFh3V0NlMWRjc08yTzJXQ0JXVHcydTdtdEJGTWxDQW9MVUMt?oc=5",
       "used_fallback": false,
       "message": "Gaming company, Caesars, was acquired by Investment company, Fertitta, for $17.6 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-09-25T20:28:28-04:00",
+      "deal_key": "warner bros discovery|paramount",
+      "target_name": "Warner Bros. Discovery",
+      "acquirer_name": "Paramount",
+      "amount_usd_millions": 110800.0,
+      "announced_date": "2026-09-24",
+      "article_url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQcV9iNm02eWNMeFFjZ3MzOERqdW1FNnJaZ2FTb3JiRkpUXy01bW00WkZLWXR1c2RqbzZWeFBoQzFhYmJneDExMUZPRHlkOUU3RU9ZT1hJM0o4R2J0aTFrV1Fqb0U5cTlaYVF2aEtEOUdmWkJfWVJnaEw3NjNlWTJqU09vckx4YUk?oc=5",
+      "used_fallback": false,
+      "message": "Media company, Warner Bros. Discovery, was acquired by Media company, Paramount, for $110.8 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -175,7 +186,10 @@
     "midtown manhattan tower|new york",
     "randhurst village|mount prospect",
     "110 tower|fort lauderdale",
-    "infill nashville portfolio|nashville"
+    "infill nashville portfolio|nashville",
+    "deer park shopping center|deer park",
+    "blaine retail center|blaine",
+    "ambrose industrial asset|indianapolis"
   ],
   "skipped": [],
   "quiet_days": 0
