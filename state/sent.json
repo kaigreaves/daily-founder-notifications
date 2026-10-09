@@ -142,6 +142,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxOQ2Q0MmYzZkpQdVVYQmlkUVRIMTBBdnZUVVB2Tkx5d0lRNVZNa3ZXTjFiU0UtWnk4U1lScVBjbzBwNnF1STgtVHhGWC0zRGNvM0I1MXFneGVwTkF1YmE0ZW9fOFRubTNYS3JsblJwWldQVkxjMGs3ZGpDNzhhSVV5SDhTWjk1SGQyQ2VqMGl1Q04zdmt3cjlsUnlmejFoZFd3Q2pjVV9vaXJGR1FIa09uS3NfM08tT3FBeUpxdlZ2eTB3Q1E?oc=5",
       "used_fallback": false,
       "message": "Software company, PTC, was acquired by Electrical company, Schneider Electric, for $22.6 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-10-08T21:54:57-04:00",
+      "deal_key": "boots|wittington investments",
+      "target_name": "Boots",
+      "acquirer_name": "Wittington Investments",
+      "amount_usd_millions": 8900.0,
+      "announced_date": "2026-10-07",
+      "article_url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxPc2twQXhEdlg1LVZxQkFEbFVCMFVTV0RiUml5aTZLR095ZHc1eFZiQkVyaldIZFljSVRHZk9UUjNnczZjaFNHRU04TnB3cXdnQlF2b0thZHVGWTFKblU3NzB0SmVXTUxvaTRZQkFxM2c4U3paNi1vN3lmTUJYM2NkLS1MNHpmT2dBaGZnd3oyOW5Nenp4b0JaX0NJcUtVSGcxTFVJ?oc=5",
+      "used_fallback": false,
+      "message": "Retail company, Boots, was acquired by Investment company, Wittington Investments, for $8.9 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -255,7 +266,10 @@
     "cambridge office building|cambridge",
     "former yamaha motor headquarters|cypress",
     "marigold center|san luis obispo",
-    "east tampa warehouse|tampa"
+    "east tampa warehouse|tampa",
+    "the grad|san jose",
+    "woodbridge luxury apartment community|woodbridge",
+    "block 37|chicago"
   ],
   "skipped": [],
   "quiet_days": 0
