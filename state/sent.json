@@ -153,6 +153,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxPc2twQXhEdlg1LVZxQkFEbFVCMFVTV0RiUml5aTZLR095ZHc1eFZiQkVyaldIZFljSVRHZk9UUjNnczZjaFNHRU04TnB3cXdnQlF2b0thZHVGWTFKblU3NzB0SmVXTUxvaTRZQkFxM2c4U3paNi1vN3lmTUJYM2NkLS1MNHpmT2dBaGZnd3oyOW5Nenp4b0JaX0NJcUtVSGcxTFVJ?oc=5",
       "used_fallback": false,
       "message": "Retail company, Boots, was acquired by Investment company, Wittington Investments, for $8.9 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-10-09T21:42:11-04:00",
+      "deal_key": "canadian utilities|emera",
+      "target_name": "Canadian Utilities",
+      "acquirer_name": "Emera",
+      "amount_usd_millions": 10000.0,
+      "announced_date": "2026-10-08",
+      "article_url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxObFFBbFAtLTd2VmpRWEZVRE1sRk1mNlNFUWN6Q1ZFUjQ5OGRnOWdiVG1XRWV6MTg2dVBfUTM5ejl2Z3ZlUEN3TC1jSjJCVGM2OUZlWU9uVWlRWU9CVFVxRnp6dVpNQ01QX29kRlNDekZZXzZhcUI3cjVYalJfUVduSEtjMWRLdk95azhmcmduRC1iOFBCNm9qbHU1RWpLTXZieXc?oc=5",
+      "used_fallback": false,
+      "message": "Utility company, Canadian Utilities, was acquired by Utility company, Emera, for $10 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -269,7 +280,10 @@
     "east tampa warehouse|tampa",
     "the grad|san jose",
     "woodbridge luxury apartment community|woodbridge",
-    "block 37|chicago"
+    "block 37|chicago",
+    "chelsea diner site|new york",
+    "former city national bank headquarters|coral gables",
+    "watauga village shopping center|boone"
   ],
   "skipped": [],
   "quiet_days": 0
