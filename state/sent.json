@@ -164,6 +164,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxObFFBbFAtLTd2VmpRWEZVRE1sRk1mNlNFUWN6Q1ZFUjQ5OGRnOWdiVG1XRWV6MTg2dVBfUTM5ejl2Z3ZlUEN3TC1jSjJCVGM2OUZlWU9uVWlRWU9CVFVxRnp6dVpNQ01QX29kRlNDekZZXzZhcUI3cjVYalJfUVduSEtjMWRLdk95azhmcmduRC1iOFBCNm9qbHU1RWpLTXZieXc?oc=5",
       "used_fallback": false,
       "message": "Utility company, Canadian Utilities, was acquired by Utility company, Emera, for $10 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-10-13T21:04:56-04:00",
+      "deal_key": "xodus medical|steris",
+      "target_name": "Xodus Medical",
+      "acquirer_name": "Steris",
+      "amount_usd_millions": 2100.0,
+      "announced_date": "2026-10-12",
+      "article_url": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNcG1BLVFQNGd2NVNZb1dXYjQzQnowSE5uM0o3aG9tQlNDNW51ejM0T21oVHRWNkgyZTZPSTUyczZNTGY3ejBFM0dOWGprSVNwZDlvMUdIYU9Od3BFR0EtakRBZ0llTnhqWTl5bzVsY0I1WkVIWGk5MTRjeHY4SmdWVGRHS0NEUDlqaXFyZE1XT3VWS21DZXc?oc=5",
+      "used_fallback": false,
+      "message": "Medical-device company, Xodus Medical, was acquired by Healthcare company, Steris, for $2.1 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -289,8 +300,9 @@
     "zoom headquarters|san jose",
     "four seasons resort scottsdale|scottsdale",
     "verso luxury apartments|davenport",
-    "fort washington commercial building|fort washington"
+    "fort washington commercial building|fort washington",
+    "airpark plaza|miami"
   ],
   "skipped": [],
-  "quiet_days": 1
+  "quiet_days": 0
 }
