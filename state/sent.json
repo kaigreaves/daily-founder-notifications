@@ -175,6 +175,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNcG1BLVFQNGd2NVNZb1dXYjQzQnowSE5uM0o3aG9tQlNDNW51ejM0T21oVHRWNkgyZTZPSTUyczZNTGY3ejBFM0dOWGprSVNwZDlvMUdIYU9Od3BFR0EtakRBZ0llTnhqWTl5bzVsY0I1WkVIWGk5MTRjeHY4SmdWVGRHS0NEUDlqaXFyZE1XT3VWS21DZXc?oc=5",
       "used_fallback": false,
       "message": "Medical-device company, Xodus Medical, was acquired by Healthcare company, Steris, for $2.1 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-10-17T19:52:03-04:00",
+      "deal_key": "varonis|proofpoint",
+      "target_name": "Varonis",
+      "acquirer_name": "Proofpoint",
+      "amount_usd_millions": 6300.0,
+      "announced_date": "2026-10-15",
+      "article_url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxNQl9UYUpXclBGS0xwOG95WXBEYmVNM2Y1Q1NGX3FfbDBiNEdSdXJHb0stcl9HV3RiZVJpSzVZTW9wMnBpMnJHQU05SVdLVHlmNFBXTm9Vb2xJZE9qR1VKTmpGRTlNbVNnM3Y3eGxMNWF3QUtrdGRlQldObk9ZMDRIRkV4OEUtY1psT1AzbFlUdHpld0pOWGVYOGlQZW9mMExodmxIQXVsNTJDS1FlaUVFUw?oc=5",
+      "used_fallback": false,
+      "message": "Cybersecurity company, Varonis, was acquired by Cybersecurity company, Proofpoint, for $6.3 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -310,7 +321,10 @@
     "atlanta industrial campus|atlanta",
     "st petersburg apartments|st petersburg",
     "calgary office building 639 5th avenue sw|calgary",
-    "prickett preserve shopping center|yardley"
+    "prickett preserve shopping center|yardley",
+    "51 story chicago office tower|chicago",
+    "chicago vertical warehouse|chicago",
+    "southern nevada industrial portfolio|las vegas"
   ],
   "skipped": [],
   "quiet_days": 0
