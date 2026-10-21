@@ -327,8 +327,11 @@
     "southern nevada industrial portfolio|las vegas",
     "metro plaza|san jose",
     "central massachusetts industrial portfolio|worcester",
-    "415 west 13th street retail condo|new york"
+    "415 west 13th street retail condo|new york",
+    "alcoa massena smelter site|massena",
+    "summit woods crossing|lee s summit",
+    "publix anchored boca retail center|boca raton"
   ],
   "skipped": [],
-  "quiet_days": 1
+  "quiet_days": 0
 }
