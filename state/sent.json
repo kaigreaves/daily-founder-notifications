@@ -186,6 +186,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxNQl9UYUpXclBGS0xwOG95WXBEYmVNM2Y1Q1NGX3FfbDBiNEdSdXJHb0stcl9HV3RiZVJpSzVZTW9wMnBpMnJHQU05SVdLVHlmNFBXTm9Vb2xJZE9qR1VKTmpGRTlNbVNnM3Y3eGxMNWF3QUtrdGRlQldObk9ZMDRIRkV4OEUtY1psT1AzbFlUdHpld0pOWGVYOGlQZW9mMExodmxIQXVsNTJDS1FlaUVFUw?oc=5",
       "used_fallback": false,
       "message": "Cybersecurity company, Varonis, was acquired by Cybersecurity company, Proofpoint, for $6.3 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-10-22T20:35:47-04:00",
+      "deal_key": "qiagen|eqt",
+      "target_name": "Qiagen",
+      "acquirer_name": "EQT",
+      "amount_usd_millions": 10800.0,
+      "announced_date": "2026-10-21",
+      "article_url": "https://news.google.com/rss/articles/CBMinwFBVV95cUxNVHkyNW5pTXVNT2J0VFpZaGVHcW95Q3lkRWZ0clJYMVdva0M4b3BDUkwzQkNnRk41T2x3M1E1bDlxUUlCYTI5cVFHc093UU5rYndOcGRpa2FjSHBreml6WGJrbHFBSXhmaTB3QUozeDVQRERJMkhpTDFCUy1zZHk0aWIxcEhpdnJjTUd3bERiNmZleEM1enEyQlpuUDNYekE?oc=5",
+      "used_fallback": false,
+      "message": "Biotech company, Qiagen, was acquired by Private-equity company, EQT, for $10.8 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -330,8 +341,11 @@
     "415 west 13th street retail condo|new york",
     "alcoa massena smelter site|massena",
     "summit woods crossing|lee s summit",
-    "publix anchored boca retail center|boca raton"
+    "publix anchored boca retail center|boca raton",
+    "lxp industrial trust portfolio|various",
+    "open air shopping center portfolio|various",
+    "one north wacker|chicago"
   ],
   "skipped": [],
-  "quiet_days": 1
+  "quiet_days": 0
 }
