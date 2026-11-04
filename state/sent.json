@@ -197,6 +197,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMinwFBVV95cUxNVHkyNW5pTXVNT2J0VFpZaGVHcW95Q3lkRWZ0clJYMVdva0M4b3BDUkwzQkNnRk41T2x3M1E1bDlxUUlCYTI5cVFHc093UU5rYndOcGRpa2FjSHBreml6WGJrbHFBSXhmaTB3QUozeDVQRERJMkhpTDFCUy1zZHk0aWIxcEhpdnJjTUd3bERiNmZleEM1enEyQlpuUDNYekE?oc=5",
       "used_fallback": false,
       "message": "Biotech company, Qiagen, was acquired by Private-equity company, EQT, for $10.8 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-11-03T21:03:56-05:00",
+      "deal_key": "lumentum|marvell technology",
+      "target_name": "Lumentum",
+      "acquirer_name": "Marvell Technology",
+      "amount_usd_millions": 115000.0,
+      "announced_date": "2026-11-02",
+      "article_url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOQTg1Z1RLbnM0SkFVN09kd01RY0MxcnhZbTNrT1F0Tms5aXFISXRvVHFpeFBFRkxVdS1TakZxem9jMzlzbWN3Tl9ZeUt5eXM0Q2JHXzZHSE83bWp5a0dPdEpoWWNYblNuZlh4ZEFEeFhFX2o1RDhTZENzbGxKMGtiWDNCekcxWnVFMkF6SzJFSEZzTXV1TzM3VFZybkplYmtVMlZj?oc=5",
+      "used_fallback": false,
+      "message": "Optical-components company, Lumentum, was acquired by Semiconductor company, Marvell Technology, for $115 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -369,8 +380,11 @@
     "biscayne boulevard shopping center|miami",
     "lamar station plaza|lakewood",
     "ritz carlton laguna niguel|dana point",
-    "bainbridge midlothian|midlothian"
+    "bainbridge midlothian|midlothian",
+    "chicago area industrial outdoor storage portfolio|chicago",
+    "golden apartment complex|golden",
+    "3699 63rd avenue ne|calgary"
   ],
   "skipped": [],
-  "quiet_days": 1
+  "quiet_days": 0
 }
