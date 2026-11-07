@@ -208,6 +208,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOQTg1Z1RLbnM0SkFVN09kd01RY0MxcnhZbTNrT1F0Tms5aXFISXRvVHFpeFBFRkxVdS1TakZxem9jMzlzbWN3Tl9ZeUt5eXM0Q2JHXzZHSE83bWp5a0dPdEpoWWNYblNuZlh4ZEFEeFhFX2o1RDhTZENzbGxKMGtiWDNCekcxWnVFMkF6SzJFSEZzTXV1TzM3VFZybkplYmtVMlZj?oc=5",
       "used_fallback": false,
       "message": "Optical-components company, Lumentum, was acquired by Semiconductor company, Marvell Technology, for $115 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-11-06T20:53:46-05:00",
+      "deal_key": "echodyne|shield ai",
+      "target_name": "Echodyne",
+      "acquirer_name": "Shield AI",
+      "amount_usd_millions": 5300.0,
+      "announced_date": "2026-11-05",
+      "article_url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQNEN1bENMU1BfQlh6enhtQ05wWWtwMC1aMGFyMFpYd2JHWmxQdjBUODd0SVNCQk5LNEJRVHpzYmNPRXBwSnVxaXRLMTl2aXhVVjYzNlB2MDB5TVViX1Q3YzJtNVFUcVpST3VSdzhXUGZtMUhTNEJhUThPbkgtX3RiMVlRVVp1cXlsdjFwTEFDMExQMDlsZldBS0hHTDh6YU04UDM0WjJYbjZsM1FkcGw3YzR4d2Nqd3NKekE?oc=5",
+      "used_fallback": false,
+      "message": "Defense company, Echodyne, was acquired by Defense company, Shield AI, for $5.3 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -386,7 +397,8 @@
     "3699 63rd avenue ne|calgary",
     "1 hotel brooklyn bridge|brooklyn",
     "225 west wacker drive|chicago",
-    "georgia multifamily portfolio|various"
+    "georgia multifamily portfolio|various",
+    "coconut creek apartment complex|coconut creek"
   ],
   "skipped": [],
   "quiet_days": 0
