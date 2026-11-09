@@ -219,6 +219,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQNEN1bENMU1BfQlh6enhtQ05wWWtwMC1aMGFyMFpYd2JHWmxQdjBUODd0SVNCQk5LNEJRVHpzYmNPRXBwSnVxaXRLMTl2aXhVVjYzNlB2MDB5TVViX1Q3YzJtNVFUcVpST3VSdzhXUGZtMUhTNEJhUThPbkgtX3RiMVlRVVp1cXlsdjFwTEFDMExQMDlsZldBS0hHTDh6YU04UDM0WjJYbjZsM1FkcGw3YzR4d2Nqd3NKekE?oc=5",
       "used_fallback": false,
       "message": "Defense company, Echodyne, was acquired by Defense company, Shield AI, for $5.3 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-11-08T20:35:00-05:00",
+      "deal_key": "roku|fox",
+      "target_name": "Roku",
+      "acquirer_name": "Fox",
+      "amount_usd_millions": 22000.0,
+      "announced_date": "2026-11-06",
+      "article_url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxNby1PWkkwYWZWdWd0endlOFdvc2NISEI2dUJtTncxM2UwaHJIR3Z6b2oxNlpKT3QzcmRZQUhEUXRlVzVBNFRBRm9sVFBEUVZjMEgxZDNfWHlHQ1lHd2o4QUx1V3ZFUmRpV0oxX3MxaVBoMEJRT1hzQl9Ea0o1U3Z5N0JB?oc=5",
+      "used_fallback": false,
+      "message": "Media company, Roku, was acquired by Media company, Fox, for $22 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -401,7 +412,10 @@
     "coconut creek apartment complex|coconut creek",
     "san francisco apartment portfolio|san francisco",
     "the ritz carlton half moon bay|half moon bay",
-    "360 west 43rd street|new york"
+    "360 west 43rd street|new york",
+    "quebec village shopping center|centennial",
+    "4 calgary office towers|calgary",
+    "queens waterfront multifamily asset|new york"
   ],
   "skipped": [],
   "quiet_days": 0
