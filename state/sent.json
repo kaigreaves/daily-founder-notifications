@@ -230,6 +230,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxNby1PWkkwYWZWdWd0endlOFdvc2NISEI2dUJtTncxM2UwaHJIR3Z6b2oxNlpKT3QzcmRZQUhEUXRlVzVBNFRBRm9sVFBEUVZjMEgxZDNfWHlHQ1lHd2o4QUx1V3ZFUmRpV0oxX3MxaVBoMEJRT1hzQl9Ea0o1U3Z5N0JB?oc=5",
       "used_fallback": false,
       "message": "Media company, Roku, was acquired by Media company, Fox, for $22 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-11-16T23:32:08-05:00",
+      "deal_key": "entel peru|millicom",
+      "target_name": "Entel Peru",
+      "acquirer_name": "Millicom",
+      "amount_usd_millions": 1700.0,
+      "announced_date": "2026-11-15",
+      "article_url": "https://news.google.com/rss/articles/CBMi5gFBVV95cUxOaW9vcGtsYUZaVW45enhqMW1lVXFkeW96eE9iWXRNVjhkSGhIN203X0NTaDNOcUFvR09NX3ZtZlJxNmE5aW9wY3VvUFFiUThYSHlSeXQ0OXVzaDl5SDIwX09FMXlNczdUTEFlNUlLaEp1WkUtV2VVc3R6U29JZW9VOVY1TnFiRnlHYm9jUXNZZDJkNGZKQVEyOE9MbHpWdFpFRXAwbV9xUXlkdEJjMTg1MzFnSlVXODg2ZXJjbXlycHg5Qkw1RURIcHM4SnV2bEFwRjZtYWF3QkxXRnlYSndlYVFneUEtUQ?oc=5",
+      "used_fallback": false,
+      "message": "Telecom company, Entel Peru, was acquired by Telecom company, Millicom, for $1.7 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -434,7 +445,10 @@
     "residences at 107 ave|kendall",
     "95 unit flatbush luxury building|new york",
     "the gardens shopping center|various",
-    "concord place|phoenix"
+    "concord place|phoenix",
+    "fremont apartment building|fremont",
+    "ben beitel luxury brooklyn building|new york",
+    "saint leonard apartment tower|saint leonard"
   ],
   "skipped": [],
   "quiet_days": 0
