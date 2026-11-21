@@ -241,6 +241,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMi5gFBVV95cUxOaW9vcGtsYUZaVW45enhqMW1lVXFkeW96eE9iWXRNVjhkSGhIN203X0NTaDNOcUFvR09NX3ZtZlJxNmE5aW9wY3VvUFFiUThYSHlSeXQ0OXVzaDl5SDIwX09FMXlNczdUTEFlNUlLaEp1WkUtV2VVc3R6U29JZW9VOVY1TnFiRnlHYm9jUXNZZDJkNGZKQVEyOE9MbHpWdFpFRXAwbV9xUXlkdEJjMTg1MzFnSlVXODg2ZXJjbXlycHg5Qkw1RURIcHM4SnV2bEFwRjZtYWF3QkxXRnlYSndlYVFneUEtUQ?oc=5",
       "used_fallback": false,
       "message": "Telecom company, Entel Peru, was acquired by Telecom company, Millicom, for $1.7 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-11-20T22:06:56-05:00",
+      "deal_key": "world labs|amd",
+      "target_name": "World Labs",
+      "acquirer_name": "AMD",
+      "amount_usd_millions": 8200.0,
+      "announced_date": "2026-11-19",
+      "article_url": "https://news.google.com/rss/articles/CBMingFBVV95cUxNQV8wOWVpX3hSNmhxR2lzdTZIRDZJVXVhSFNEMk5Vd1hOVGUwRGJOR3JwaEdaVmlOUVV3a0dDVlU4aHI5SXV6eTVsQy1ieDVKcm53dXBUenE0TnlldUszZmxJODB2NGZnMnJYQ1ZMNkt4c1RsWlZvX0FMTTZ0VG1DQ3hCQnFVMXVYMVlzUEtmSUl6aFdOMTlmQlBXY1JhUQ?oc=5",
+      "used_fallback": false,
+      "message": "AI company, World Labs, was acquired by Semiconductor company, AMD, for $8.2 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -456,7 +467,10 @@
     "seniors housing portfolio|ottawa",
     "270 hennepin|minneapolis",
     "miami beach hotel|miami beach",
-    "park avenue duplex|new york"
+    "park avenue duplex|new york",
+    "prince william data center|prince william",
+    "carmel mission inn|carmel",
+    "fairview maple grove medical building|maple grove"
   ],
   "skipped": [],
   "quiet_days": 0
