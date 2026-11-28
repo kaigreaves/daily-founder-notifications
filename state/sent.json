@@ -252,6 +252,17 @@
       "article_url": "https://news.google.com/rss/articles/CBMingFBVV95cUxNQV8wOWVpX3hSNmhxR2lzdTZIRDZJVXVhSFNEMk5Vd1hOVGUwRGJOR3JwaEdaVmlOUVV3a0dDVlU4aHI5SXV6eTVsQy1ieDVKcm53dXBUenE0TnlldUszZmxJODB2NGZnMnJYQ1ZMNkt4c1RsWlZvX0FMTTZ0VG1DQ3hCQnFVMXVYMVlzUEtmSUl6aFdOMTlmQlBXY1JhUQ?oc=5",
       "used_fallback": false,
       "message": "AI company, World Labs, was acquired by Semiconductor company, AMD, for $8.2 billion. Tap to read more."
+    },
+    {
+      "sent_at_et": "2026-11-27T22:49:50-05:00",
+      "deal_key": "insmed|sanofi",
+      "target_name": "Insmed",
+      "acquirer_name": "Sanofi",
+      "amount_usd_millions": 41000.0,
+      "announced_date": "2026-11-24",
+      "article_url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE5XTnVRZGJIVzN1MTFiX0EyUVRVejVEa3AwdjNKaklRaUk0d3dlMllUVWx4aGg4aEpkYzU0cHhLVnViOElOM0hzUHJkUHA0b1FMQXpiY0NmcmdmbEJTNEsteVNybw?oc=5",
+      "used_fallback": false,
+      "message": "Biotech company, Insmed, was acquired by Pharmaceutical company, Sanofi, for $41 billion. Tap to read more."
     }
   ],
   "re_sent": [
@@ -485,7 +496,10 @@
     "boardwalk edmonton multi family portfolio|edmonton",
     "90 park avenue|new york",
     "the sinclair|chicago",
-    "hyatt place hyatt house downtown tampa|tampa"
+    "hyatt place hyatt house downtown tampa|tampa",
+    "fidi office building|new york",
+    "gateway shopping district|fort lauderdale",
+    "2748 grant ave|philadelphia"
   ],
   "skipped": [],
   "quiet_days": 0
